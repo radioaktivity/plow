@@ -6,7 +6,7 @@ from cell import *
 from point import *
 from scipy.ndimage.interpolation import zoom
 
-def create_mesh(nx=4,ny=4, plot_cells=False):
+def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
     # Create point map as well as delaunay triangles
 
     x = np.linspace(0,1,nx**2)
@@ -39,24 +39,25 @@ def create_mesh(nx=4,ny=4, plot_cells=False):
     tri = Delaunay(points)
 
     # Write cells and points in csv for later consumption
-    with open('MESH/eggs.csv', 'w', newline='') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter=',',
-                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        spamwriter.writerow(['CellNumber', 
-            'point1x','point1y', 
-            'point2x','point2y',
-            'point3x','point3y',
-            'neighbor1', 'neighbor2','neighbor3'])
-        i = 0
-        for i in range(len(tri.simplices)):
-            cis = tri.simplices[i] # CornerIndicieS
-            neighbors = tri.neighbors[i]
-            spamwriter.writerow([i, 
-                        points[cis[0]][0],points[cis[0]][1],
-                        points[cis[1]][0],points[cis[1]][1],
-                        points[cis[2]][0],points[cis[2]][1],
-                        neighbors[0], neighbors[1], neighbors[2]])
-            i += 1
+    if write_mesh:
+        with open('MESH/eggs.csv', 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            spamwriter.writerow(['CellNumber', 
+                'point1x','point1y', 
+                'point2x','point2y',
+                'point3x','point3y',
+                'neighbor1', 'neighbor2','neighbor3'])
+            i = 0
+            for i in range(len(tri.simplices)):
+                cis = tri.simplices[i] # CornerIndicieS
+                neighbors = tri.neighbors[i]
+                spamwriter.writerow([i, 
+                            points[cis[0]][0],points[cis[0]][1],
+                            points[cis[1]][0],points[cis[1]][1],
+                            points[cis[2]][0],points[cis[2]][1],
+                            neighbors[0], neighbors[1], neighbors[2]])
+                i += 1
 
     # Convert triangles in cell-objects and points in point-objects
     cells = []
@@ -90,21 +91,21 @@ def create_mesh(nx=4,ny=4, plot_cells=False):
 
         c.assign_random_U()
 
-        if plot_cells:
-            plt.triplot(points[:,0], points[:,1], tri.simplices)
+    if plot_cells:
+        plt.triplot(points[:,0], points[:,1], tri.simplices)
 
-            plt.plot(points[:,0], points[:,1], 'o')
-            for j, p in enumerate(points):
+        plt.plot(points[:,0], points[:,1], 'o')
+        for j, p in enumerate(points):
 
-                plt.text(p[0], p[1], j, ha='right') # label the points
+            plt.text(p[0], p[1], j, ha='right') # label the points
 
-            for j, s in enumerate(tri.simplices):
+        for j, s in enumerate(tri.simplices):
 
-                p = points[s].mean(axis=0)
+            p = points[s].mean(axis=0)
 
-                plt.text(p[0], p[1], '#%d' % j, ha='center') # label triangles
+            plt.text(p[0], p[1], '#%d' % j, ha='center') # label triangles
 
-            plt.xlim(-0.5, 1.5); plt.ylim(-0.5, 1.5)
+        plt.xlim(-0.5, 1.5); plt.ylim(-0.5, 1.5)
 
 
     return [cells, points_obj]

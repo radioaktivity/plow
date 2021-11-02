@@ -14,9 +14,8 @@ import matplotlib.pyplot as plt
 def main():
     atm.gamma
 
-    [cells, points] = create_mesh(nx=2,ny=2, plot_cells=True)
-    for c in cells:
-        print(c)
+    [cells, points] = create_mesh(nx=4,ny=4, plot_cells=True)
+
     x = np.array([cell.center[0] for cell in cells])
     y = np.array([cell.center[1] for cell in cells])
     

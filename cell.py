@@ -1,5 +1,8 @@
-from point import *
 import numpy as np
+
+from point import *
+from face import *
+
 
 class Cell:
     def __init__(self, number):
@@ -11,6 +14,12 @@ class Cell:
         self.center = 0
         self.boundary_points = []
         self.volume = 0
+
+        # primitive values
+        self.rho = 0
+        self.p = 0
+        self.u = 0
+        self.v = 0
 
 
     def set_boundary_points(self, list_of_points:Point):
@@ -27,13 +36,13 @@ class Cell:
             k+=1
         self.center  = boundary_points_ko.mean(axis=0)
 
-    def assign_random_U(self):
-        u_from_points = []
-        v_from_points = []
-        for p in self.boundary_points:
-            u_from_points.append(p.U[0])
-            v_from_points.append(p.U[1])
-        self.U = [np.array(u_from_points).mean(),np.array(v_from_points).mean()]
+    # def assign_random_U(self):
+    #     u_from_points = []
+    #     v_from_points = []
+    #     for p in self.boundary_points:
+    #         u_from_points.append(p.U[0])
+    #         v_from_points.append(p.U[1])
+    #     self.U = [np.array(u_from_points).mean(),np.array(v_from_points).mean()]
 
     def calc_volume(self):
         a = self.boundary_points[0].distance(self.boundary_points[1])
