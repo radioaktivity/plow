@@ -40,29 +40,24 @@ class Cell:
             p2 = self.boundary_points[1]
             p3 = self.boundary_points[2]
             self.faces.append(Face(p1,p2))
-            self.faces.append(Face(p1,p2))
-            self.faces.append(Face(p1,p2))
+            self.faces.append(Face(p3,p2))
+            self.faces.append(Face(p1,p3))
         else: 
             raise Exception("Rectangular cells not yet permitted")
 
     def face_neighbor_check(self):
         # loops through all neighbors, its faces and compares every one with own faces
-        # if it is the same, the neigbors face is taken, if not the own cell is kept
+        # if it is the same, the neigbors face is taken, if not the own cell is keptcl
 
-        i = -1
-        new_face_array = []
         for n in self.neighbors:
-            for fn in n.faces:
-                isequal = True # True = there is no neighbor with an identical cell 
-                for f in self.faces:
+
+            for j in range(len(n.faces)):
+                fn = n.faces[j]
+                for i in range(len(self.faces)):
+                    f = self.faces[i]
                     equal = f.is_equal_to(fn)
                     if equal:
-                        isequal = False 
-                        new_face_array.append(fn)
-                if isequal: # False = there is a neighbor with an identical cell 
-                    new_face_array.append(f)
-                    
-        self.faces = new_face_array
+                        self.faces[i] = fn
 
     def calc_center(self):
         # Calculating the center by the mean of all boundary points
@@ -95,11 +90,14 @@ class Cell:
         list_neighbors = ''
         for n in self.neighbors:
             list_neighbors = list_neighbors + f';{n.number}\n'
-        return f"Cell at {self.center.__str__()}\n with the neighbors {list_neighbors} " + \
-            f"and boundary points \n {[p.__str__() for p in self.boundary_points]}  \n value U {self.U}\n" + \
-                f"volume: {self.volume}\n__________________"
+        return f"#Cell {self.number}, #center {self.center.__str__()}\n with the #Neighbors {list_neighbors} " + \
+            f"and #boundary points \n {[p.__str__() for p in self.boundary_points]} \n" + \
+                f"#Faces: {[f for f in self.faces]}\n"+\
+                f"#Faces: {[f.__str__() for f in self.faces]}\n"+\
+                f"#volume: {self.volume}\n__________________"
 
 if __name__ == "__main__":
+
     cell1 = Cell(0)
     cell2 = Cell(1)
 
@@ -111,12 +109,18 @@ if __name__ == "__main__":
     cell1.set_boundary_points([p1,p2,p3])
     cell2.set_boundary_points([p1,p3,p4])
 
-    cell1.add_neighbor([cell2])
-    
+    cell1.add_neighbor(cell2)
+    cell2.add_neighbor(cell1)
+
     cell1.create_faces()
     cell2.create_faces()
+    print("################# BEFORE ##################")
+    print(cell1)
+    print(cell2)
 
     cell1.face_neighbor_check()
     cell2.face_neighbor_check()
+    print("################# AFTER ##################")
+    print(cell1)
+    print(cell2)
 
-    print(cell1.center) 

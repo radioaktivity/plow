@@ -9,7 +9,8 @@ class Face:
         # geometry
         self.center = Point()
         self.boundary_points = [p1, p2]
-        self.sruface = 0
+        self.calc_center()
+        self.surface = p1.distance(p2)
 
         # primitive values
         self.rho = 0

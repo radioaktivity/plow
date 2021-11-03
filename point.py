@@ -9,9 +9,7 @@ class Point(object):
     COUNT = 0
 
     def __init__(self, *arg):
-        '''Defines x and y variables'''
-        print(arg)
-    
+        '''Defines x and y variables'''    
         if arg == ():
             self.X = None
             self.Y = None
