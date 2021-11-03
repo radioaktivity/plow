@@ -114,10 +114,9 @@ if __name__ == "__main__":
     cell1.add_neighbor([cell2])
     
     cell1.create_faces()
-    cell1.face_neighbor_check()
     cell2.create_faces()
+
+    cell1.face_neighbor_check()
     cell2.face_neighbor_check()
-
-
 
     print(cell1.center) 
