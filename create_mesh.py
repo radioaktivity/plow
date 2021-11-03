@@ -9,23 +9,23 @@ from scipy.ndimage.interpolation import zoom
 def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
     # Create point map as well as delaunay triangles
 
-    x = np.linspace(0,1,nx**2)
-    y = np.linspace(0,1,ny**2)
+    x = np.linspace(0,1,nx)
+    y = np.linspace(0,1,ny)
 
     # For demonstration give every cell a random value of U 
-    arr = np.random.uniform(size=(nx,nx))
-    arr_u = zoom(arr, nx)
-    arr = np.random.uniform(size=(ny,ny))
-    arr_v = zoom(arr, ny)
-    velocity_vector = np.zeros([len(x)*len(y), 2])
+    # arr = np.random.uniform(size=(nx,nx))
+    # arr_u = zoom(arr, nx)
+    # arr = np.random.uniform(size=(ny,ny))
+    # arr_v = zoom(arr, ny)
+    # velocity_vector = np.zeros([len(x)*len(y), 2])
 
     i = 0
     j = 0
     k = 0
-    for i in range(arr_u.shape[0]):
-        for j in range(arr_u.shape[1]):
-            velocity_vector[k] = [arr_u[i,j], arr_v[i,j]]
-            k += 1
+    # for i in range(arr_u.shape[0]):
+    #     for j in range(arr_u.shape[1]):
+    #         velocity_vector[k] = [arr_u[i,j], arr_v[i,j]]
+    #         k += 1
 
     points = np.zeros([len(x)*len(y), 2])
     k = 0
@@ -68,7 +68,7 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
     points_obj = []
     for i in range(len(points)):
         new_point = Point(points[i])
-        new_point.U = velocity_vector[i]
+        # new_point.U = velocity_vector[i]
         points_obj.append(new_point)
 
 
@@ -89,7 +89,7 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
 
         # For demonstration give every cell a random value of U 
 
-        c.assign_random_U()
+        # c.assign_random_U()
 
     if plot_cells:
         plt.triplot(points[:,0], points[:,1], tri.simplices)

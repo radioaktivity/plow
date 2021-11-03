@@ -2,6 +2,7 @@ import numpy as np
 
 from point import *
 from face import *
+import gc
 
 
 class Cell:
@@ -9,13 +10,16 @@ class Cell:
         # organizing
         self.number = number
         self.neighbors = []
+        self.faces = []
 
         # geometry
-        self.center = 0
+        self.center = Point()
         self.boundary_points = []
         self.volume = 0
+        self.dis2faces = []
+        self.dis2neighbors = []
 
-        # primitive values
+        # primitive values (at the center)
         self.rho = 0
         self.p = 0
         self.u = 0
@@ -27,37 +31,93 @@ class Cell:
     
     def add_neighbor(self, new_neighbors):
         self.neighbors.append(new_neighbors)
+    
+    def create_faces(self):
+        # creating all faces out of boundary points
+
+        if len(self.boundary_points) == 3:
+            p1 = self.boundary_points[0]
+            p2 = self.boundary_points[1]
+            p3 = self.boundary_points[2]
+            self.faces.append(Face(p1,p2))
+            self.faces.append(Face(p1,p2))
+            self.faces.append(Face(p1,p2))
+        else: 
+            raise Exception("Rectangular cells not yet permitted")
+
+    def face_neighbor_check(self):
+        # loops through all neighbors, its faces and compares every one with own faces
+        # if it is the same, the neigbors face is taken, if not the own cell is kept
+
+        i = -1
+        new_face_array = []
+        for n in self.neighbors:
+            for fn in n.faces:
+                isequal = True # True = there is no neighbor with an identical cell 
+                for f in self.faces:
+                    equal = f.is_equal_to(fn)
+                    if equal:
+                        isequal = False 
+                        new_face_array.append(fn)
+                if isequal: # False = there is a neighbor with an identical cell 
+                    new_face_array.append(f)
+                    
+        self.faces = new_face_array
 
     def calc_center(self):
+        # Calculating the center by the mean of all boundary points
         boundary_points_ko =np.zeros([len(self.boundary_points),2])
         k = 0
         for p in self.boundary_points:
             boundary_points_ko[k] = p.getValue()
             k+=1
-        self.center  = boundary_points_ko.mean(axis=0)
-
-    # def assign_random_U(self):
-    #     u_from_points = []
-    #     v_from_points = []
-    #     for p in self.boundary_points:
-    #         u_from_points.append(p.U[0])
-    #         v_from_points.append(p.U[1])
-    #     self.U = [np.array(u_from_points).mean(),np.array(v_from_points).mean()]
+        center = boundary_points_ko.mean(axis=0)
+        self.center = Point(center)
 
     def calc_volume(self):
+        # Calculating the Volume (3D)/ the Surface (2D) of the cell
         a = self.boundary_points[0].distance(self.boundary_points[1])
         b = self.boundary_points[0].distance(self.boundary_points[2])
         surface = a * b * 0.5 
         self.volume = surface  
+    
+    def calc_distances_neigbhors(self):
+        # Calculates distances to all neigbors of the cell
+        for n in self.neighbors:
+            self.center.distance(n.center)
+
+    def calc_distances_faces(self):
+        # Calculates distances to all face centers of the cell
+        for f in self.faces:
+            self.center.distance(f.center)
 
     def __str__(self):
         list_neighbors = ''
         for n in self.neighbors:
             list_neighbors = list_neighbors + f';{n.number}\n'
-        return f"Cell at {self.center}\n with the neighbors {list_neighbors} " + \
+        return f"Cell at {self.center.__str__()}\n with the neighbors {list_neighbors} " + \
             f"and boundary points \n {[p.__str__() for p in self.boundary_points]}  \n value U {self.U}\n" + \
                 f"volume: {self.volume}\n__________________"
 
 if __name__ == "__main__":
     cell1 = Cell(0)
+    cell2 = Cell(1)
+
+    p1 = Point(np.array([0,0]))
+    p2 = Point(np.array([0,1]))
+    p3 = Point(np.array([1,1]))
+    p4 = Point(np.array([1,0]))
+
+    cell1.set_boundary_points([p1,p2,p3])
+    cell2.set_boundary_points([p1,p3,p4])
+
+    cell1.add_neighbor([cell2])
+    
+    cell1.create_faces()
+    cell1.face_neighbor_check()
+    cell2.create_faces()
+    cell2.face_neighbor_check()
+
+
+
     print(cell1.center) 
