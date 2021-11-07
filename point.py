@@ -35,6 +35,9 @@ class Point(object):
 
     def getY(self):
         return self.Y
+    
+    def getVec(self):
+        return np.array([self.X, self.Y])
 
     def distance(self, other):
         dx = self.X - other.X

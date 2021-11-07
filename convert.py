@@ -1,41 +1,41 @@
-def getConserved( rho, vx, vy, P, gamma, vol ):
+def getConserved( rho, u, v, p, gamma, vol ):
     """
     Calculate the conserved variable from the primitive
     rho      is matrix of cell densities
-    vx       is matrix of cell x-velocity
-    vy       is matrix of cell y-velocity
-    P        is matrix of cell pressures
+    u       is matrix of cell x-velocity
+    v       is matrix of cell y-velocity
+    p        is matrix of cell pressures
     gamma    is ideal gas gamma
     vol      is cell volume
-    Mass     is matrix of mass in cells
-    Momx     is matrix of x-momentum in cells
-    Momy     is matrix of y-momentum in cells
-    Energy   is matrix of energy in cells
+    m     is matrix of m in cells
+    mu     is matrix of x-momentum in cells
+    mv     is matrix of y-momentum in cells
+    e   is matrix of e in cells
     """
-    Mass   = rho * vol
-    Momx   = rho * vx * vol
-    Momy   = rho * vy * vol
-    Energy = (P/(gamma-1) + 0.5*rho*(vx**2+vy**2))*vol
+    m   = rho * vol
+    mu   = rho * u * vol
+    mv   = rho * v * vol
+    e = (p/(gamma-1) + 0.5*rho*(u**2+v**2))*vol
 
-    return Mass, Momx, Momy, Energy
+    return m, mu, mv, e
 
-def getPrimitive( Mass, Momx, Momy, Energy, gamma, vol ):
+def getPrimitive( m, mu, mv, e, gamma, vol ):
     """
     Calculate the primitive variable from the conservative
-    Mass     is matrix of mass in cells
-    Momx     is matrix of x-momentum in cells
-    Momy     is matrix of y-momentum in cells
-    Energy   is matrix of energy in cells
+    m     is matrix of m in cells
+    mu     is matrix of x-momentum in cells
+    mv     is matrix of y-momentum in cells
+    e   is matrix of e in cells
     gamma    is ideal gas gamma
     vol      is cell volume
     rho      is matrix of cell densities
-    vx       is matrix of cell x-velocity
-    vy       is matrix of cell y-velocity
-    P        is matrix of cell pressures
+    u       is matrix of cell x-velocity
+    v       is matrix of cell y-velocity
+    p        is matrix of cell pressures
     """
-    rho = Mass / vol
-    vx  = Momx / rho / vol
-    vy  = Momy / rho / vol
-    P   = (Energy/vol - 0.5*rho * (vx**2+vy**2)) * (gamma-1)
+    rho = m / vol
+    u  = mu / rho / vol
+    v  = mv / rho / vol
+    p   = (e/vol - 0.5*rho * (u**2+v**2)) * (gamma-1)
 
-    return rho, vx, vy, P
+    return rho, u, v, p

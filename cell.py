@@ -26,6 +26,7 @@ class Cell:
         self.v = 0
 
 
+
     def set_boundary_points(self, list_of_points:Point):
         self.boundary_points = list_of_points
     
@@ -73,7 +74,9 @@ class Cell:
         # Calculating the Volume (3D)/ the Surface (2D) of the cell
         a = self.boundary_points[0].distance(self.boundary_points[1])
         b = self.boundary_points[0].distance(self.boundary_points[2])
-        surface = a * b * 0.5 
+        c = self.boundary_points[1].distance(self.boundary_points[2])
+        s = 0.5*(a+b+c)
+        surface = np.sqrt(s*(s-a)*(s-b)*(s-c))
         self.volume = surface  
     
     def calc_distances_neigbhors(self):

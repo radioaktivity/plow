@@ -2,40 +2,43 @@ import csv
 import numpy as np
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
-from cell import *
-from point import *
 from scipy.ndimage.interpolation import zoom
 
+from cell import *
+from point import *
+from face import *
+
+
 def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
+
+    #Your statements here
+
     # Create point map as well as delaunay triangles
 
     x = np.linspace(0,1,nx)
     y = np.linspace(0,1,ny)
 
-    # For demonstration give every cell a random value of U 
-    # arr = np.random.uniform(size=(nx,nx))
-    # arr_u = zoom(arr, nx)
-    # arr = np.random.uniform(size=(ny,ny))
-    # arr_v = zoom(arr, ny)
-    # velocity_vector = np.zeros([len(x)*len(y), 2])
 
     i = 0
     j = 0
     k = 0
-    # for i in range(arr_u.shape[0]):
-    #     for j in range(arr_u.shape[1]):
-    #         velocity_vector[k] = [arr_u[i,j], arr_v[i,j]]
-    #         k += 1
 
+    # Create field of points
+    print(f"Creating Delaunay")
+    print("-"*50)
     points = np.zeros([len(x)*len(y), 2])
     k = 0
 
     for i in x:
         for j in y:
-            points[k,0] = i
-            points[k,1] = j
+            if (k % 2) == 0:
+                corr = 0
+            else:
+                corr = 0
+            points[k,0] = i + corr
+            points[k,1] = j 
             k += 1
-
+    # run delaunay algorithm
     tri = Delaunay(points)
 
     # Write cells and points in csv for later consumption
@@ -60,38 +63,52 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
                 i += 1
 
     # Convert triangles in cell-objects and points in point-objects
-    cells = []
+    # ----------------------------------------------------------
 
+    print("Creating Cells and Points")
+    print("-"*50)
+    # Cretae as many empty cells as delauny triangles
+    cells = []
     for i in range(len(tri.simplices)):
         cells.append(Cell(i))
 
+    # create a Point() instance for every point there is 
     points_obj = []
     for i in range(len(points)):
         new_point = Point(points[i])
-        # new_point.U = velocity_vector[i]
         points_obj.append(new_point)
 
 
+    print("Setting boundary points and neighbors")
+    print("-"*50)
     # give every cell his neighbors and cells 
     for i in range(len(tri.simplices)):
-        c = cells[i]
+
+        c = cells[i] # current cell
 
         bps = [] # List of boundary points for current cell
-        for index in tri.simplices[i]:
+        for index in tri.simplices[i]: # parse the point array of the delauny tri 
             bps.append(points_obj[index])
         c.set_boundary_points(bps)
         c.calc_center()
         c.calc_volume()
 
-        for new_neighbor in tri.neighbors[i]:
-            if not(new_neighbor == -1):
+        for new_neighbor in tri.neighbors[i]: # parse the neighbor array of the delauny tri 
+            if not(new_neighbor == -1): # when entry is -1, current face has no neighbor
                 c.add_neighbor(cells[new_neighbor])
 
-        # For demonstration give every cell a random value of U 
 
-        # c.assign_random_U()
+    print("Creating Faces and Neighbor check")
+   
+    print("-"*50)
+    for c in cells:
+        c.create_faces()
+        c.face_neighbor_check()
+
 
     if plot_cells:
+        print("Plotting Cells")
+        print("-"*50)
         plt.triplot(points[:,0], points[:,1], tri.simplices)
 
         plt.plot(points[:,0], points[:,1], 'o')

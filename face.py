@@ -11,15 +11,24 @@ class Face:
         self.boundary_points = [p1, p2]
         self.calc_center()
         self.surface = p1.distance(p2)
+        self.n = [0, 0]
+        self.calc_surfacenormal()
+        
 
         # primitive values
-        self.rho = 0
-        self.p = 0
-        self.u = 0
-        self.v = 0
-    
-    
+        [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]=\
+            [0.,0.,0.,0.,0.,0.,0.,0.]
+        [self.m, self.mu, self.mv, self.e] = \
+            [0.,0.,0.,0.]
+
+    def calc_surfacenormal(self):
+        tangent = self.boundary_points[1].getVec()-self.boundary_points[0].getVec()
+        normal = [-1/self.surface * tangent[1], 
+                    1/self.surface *  tangent[0]]
+        self.n = normal
+
     def calc_center(self):
+        # Takes boundary poitns and sets center 
         boundary_points_ko =np.zeros([len(self.boundary_points),2])
         k = 0
         for p in self.boundary_points:
@@ -49,10 +58,47 @@ class Face:
             return True
         else:
             return False
+    
+    def getFlux(self, gamma = 1.3):
+        [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
+         [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
+
+        # left and right energies
+        en_L = p_L/(gamma-1)+0.5*rho_L * (u_L**2+v_L**2)
+        en_R = p_R/(gamma-1)+0.5*rho_R * (u_R**2+v_R**2)
+
+        # compute star (averaged) states
+        rho_star  = 0.5*(rho_L + rho_R)
+        momx_star = 0.5*(rho_L * u_L + rho_R * u_R)
+        momy_star = 0.5*(rho_L * v_L + rho_R * v_R)
+        en_star   = 0.5*(en_L + en_R)
+
+        P_star = (gamma-1)*(en_star-0.5*(momx_star**2+momy_star**2)/rho_star)
+
+        # compute fluxes (local Lax-Friedrichs/Rusanov)
+        m   = momx_star
+        mu   = momx_star**2/rho_star + P_star
+        mv   = momx_star * momy_star/rho_star
+        e = (en_star+P_star) * momx_star/rho_star
+
+        # find wavespeeds
+        C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
+        C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)
+        C = np.maximum( C_L, C_R )
+
+        # add stabilizing diffusive term
+        m   -= C * 0.5 * (rho_L - rho_R)
+        mu   -= C * 0.5 * (rho_L * u_L - rho_R * u_R)
+        mv   -= C * 0.5 * (rho_L * v_L - rho_R * v_R)
+        e -= C * 0.5 * ( en_L - en_R )
         
+        [self.m, self.mu, self.mv, self.e] = \
+        [m, mu, mv, e]
+
 
     def __str__(self):
         return f"Face between {self.boundary_points[0].__str__()} and {self.boundary_points[1].__str__()} center : {self.center}"
+
 
 if __name__ == "__main__":
     p1 = Point(np.array([1,1]))
@@ -60,3 +106,4 @@ if __name__ == "__main__":
     f1 = Face(p1,p2)
     f2 = Face(p2,p1)
     print(f1.is_equal_to(f2))
+    print(f1.n)
