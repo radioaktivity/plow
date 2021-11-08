@@ -170,13 +170,9 @@ if __name__ == "__main__":
 
     cell1.create_faces()
     cell2.create_faces()
-    print("################# BEFORE ##################")
-    print(cell1)
-    print(cell2)
 
     cell1.face_neighbor_check()
     cell2.face_neighbor_check()
-    print("################# AFTER ##################")
-    print(cell1)
-    print(cell2)
+    
+    print(cell1.calc_gradients_weighted_sum())
 

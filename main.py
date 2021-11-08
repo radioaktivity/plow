@@ -18,9 +18,12 @@ def main():
     atm.gamma
 
     start = timeit.default_timer()
-    [cells, points] = create_mesh(nx=2,ny=2, plot_cells=True)
+    [cells, points] = create_mesh(nx=3,ny=2, plot_cells=True)
     print(f"Mesh Runtime : {timeit.default_timer()-start}")
 
+    courant_fac = 0.4
+    dt = 0.01
+    
     for c in cells:
         c.calc_gradients_weighted_sum()
 

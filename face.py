@@ -21,6 +21,9 @@ class Face:
         [self.m, self.mu, self.mv, self.e] = \
             [0.,0.,0.,0.]
 
+        # logic switches
+        self.isL = False
+
     def calc_surfacenormal(self):
         tangent = self.boundary_points[1].getVec()-self.boundary_points[0].getVec()
         normal = [-1/self.surface * tangent[1], 
@@ -59,6 +62,24 @@ class Face:
         else:
             return False
     
+    def get_primitive_value(self, rho, u, v, p):
+        # takes primitive values from one cell 
+        # assigns primitive values to L 
+        # if L is already full assigns to R
+
+        if self.isL:
+            self.rho_L = rho
+            self.u_L = u 
+            self.v_L = v
+            self.p_L = p
+
+            self.isL = True
+        else:
+            self.rho_R = rho
+            self.u_R = u
+            self.v_R = v
+            self.p_R = p
+
     def getFlux(self, gamma = 1.3):
         [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
          [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
@@ -95,6 +116,7 @@ class Face:
         [self.m, self.mu, self.mv, self.e] = \
         [m, mu, mv, e]
 
+        self.isL = False # Reset the state so next iteration overwrites 
 
     def __str__(self):
         return f"Face between {self.boundary_points[0].__str__()} and {self.boundary_points[1].__str__()} center : {self.center}"
