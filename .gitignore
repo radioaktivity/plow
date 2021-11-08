@@ -3,6 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+
+# Python files which don't belong to this thread
+example_fipy.ipynb
+finitevolume.png
+main_example.py
+
+
+
 # C extensions
 *.so
 

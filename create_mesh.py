@@ -81,7 +81,8 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
 
     print("Setting boundary points and neighbors")
     print("-"*50)
-    # give every cell his neighbors and cells 
+
+    # give every cell his neighbors and boundary points 
     for i in range(len(tri.simplices)):
 
         c = cells[i] # current cell
@@ -91,19 +92,19 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
             bps.append(points_obj[index])
         c.set_boundary_points(bps)
         c.calc_center()
-        c.calc_volume()
 
         for new_neighbor in tri.neighbors[i]: # parse the neighbor array of the delauny tri 
             if not(new_neighbor == -1): # when entry is -1, current face has no neighbor
                 c.add_neighbor(cells[new_neighbor])
 
 
-    print("Creating Faces and Neighbor check")
+    print("Creating Faces and Neighbor check. Calculating vectors")
    
     print("-"*50)
     for c in cells:
         c.create_faces()
         c.face_neighbor_check()
+        c.calc_all()
 
 
     if plot_cells:

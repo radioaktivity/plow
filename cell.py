@@ -27,10 +27,22 @@ class Cell:
         self.u = random.uniform(0,1)
         self.v = random.uniform(0,1)
 
+    def calc_all(self):
+        if self.boundary_points == []:
+            raise Exception('Fatal: No Boundary Points added')
+        if self.neighbors == []:
+            raise Exception('Fatal: No Neighbors added')
+        if self.faces == []:
+            raise Exception('Fatal: No faces added')
+    
+        self.calc_distances_neigbhors()
+        self.calc_distances_faces()
+        self.calc_volume()
 
 
     def set_boundary_points(self, list_of_points:Point):
         self.boundary_points = list_of_points
+        self.calc_center()
     
     def add_neighbor(self, new_neighbors):
         self.neighbors.append(new_neighbors)
@@ -111,20 +123,20 @@ class Cell:
             [0.,0.,0.,0.,0.,0.,0.,0.]
 
         for [n,cn] in zip(self.neighbors, self.dis2neighbors):
-            print(cn)
+
             vol.append(n.volume)
 
-            rho_dx += n.volume * (self.rho - n.rho)/(cn[0])
-            rho_dy += n.volume * (self.rho - n.rho)/(cn[1])
+            if not(cn[0] == 0): # When 0 centers lie in the same x so no gradient in x-Direction of this cell
+                rho_dx += n.volume * (self.rho - n.rho)/(cn[0])
+                u_dx += n.volume * (self.u - n.u)/(cn[0])
+                v_dx += n.volume * (self.v - n.v)/(cn[0])
+                p_dx += n.volume * (self.p - n.p)/(cn[0])
 
-            u_dx += n.volume * (self.u - n.u)/(cn[0])
-            u_dy += n.volume * (self.u - n.u)/(cn[1])
-
-            v_dx += n.volume * (self.v - n.v)/(cn[0])
-            v_dy += n.volume * (self.v - n.v)/(cn[1])
-
-            p_dx += n.volume * (self.p - n.p)/(cn[0])
-            p_dy += n.volume * (self.p - n.p)/(cn[1])
+            if not(cn[1]==0):
+                rho_dy += n.volume * (self.rho - n.rho)/(cn[1])
+                u_dy += n.volume * (self.u - n.u)/(cn[1])
+                v_dy += n.volume * (self.v - n.v)/(cn[1])
+                p_dy += n.volume * (self.p - n.p)/(cn[1])
 
 
         v_tot = np.sum(vol)
@@ -150,7 +162,7 @@ class Cell:
             f"and #boundary points \n {[p.__str__() for p in self.boundary_points]} \n" + \
                 f"#Faces: {[f for f in self.faces]}\n"+\
                 f"#Faces: {[f.__str__() for f in self.faces]}\n"+\
-                f"#volume: {self.volume}\n__________________"
+                f"#volume: {self.volume}\n________________________________________________________________________"
 
 if __name__ == "__main__":
 
@@ -174,5 +186,9 @@ if __name__ == "__main__":
     cell1.face_neighbor_check()
     cell2.face_neighbor_check()
     
+    cell1.calc_all()
+    cell2.calc_all()
+
+
     print(cell1.calc_gradients_weighted_sum())
 

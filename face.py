@@ -37,7 +37,7 @@ class Face:
         for p in self.boundary_points:
             boundary_points_ko[k] = p.getValue()
             k+=1
-        self.center  = boundary_points_ko.mean(axis=0)
+        self.center  = Point(boundary_points_ko.mean(axis=0))
 
     def is_equal_to(self, other_face):
         # Takes another Face() as input and checks its points

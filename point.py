@@ -24,6 +24,12 @@ class Point(object):
         self.X = self.X + dx
         self.Y = self.Y + dy
 
+    def isDefined(self):
+        if (self.X == None) and (self.Y == None):
+            return False
+        else:
+            return True
+
     def __str__(self):
         return "Point(%s,%s)"%(self.X, self.Y) 
 
