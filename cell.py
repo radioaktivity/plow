@@ -21,11 +21,24 @@ class Cell:
         self.dis2faces = [np.zeros([2,1]),np.zeros([2,1]),np.zeros([2,1])]
         self.dis2neighbors = [np.zeros([2,1]), np.zeros([2,1]), np.zeros([2,1])]
 
-        # primitive values (at the center)
-        self.rho = random.uniform(0,1)
-        self.p = random.uniform(0,1)
-        self.u = random.uniform(0,1)
-        self.v = random.uniform(0,1)
+
+        # primitives
+        self.rho = 0
+        self.p = 0
+        self.u = 0
+        self.v = 0
+        self.gradients = None
+
+        # conservatives
+        self.m = 0
+        self.mu = 0
+        self.mv = 0
+        self.e = 0
+
+    def calc_primitives(self):
+        self.rho, self.u, self.v, self.p = \
+            getPrimitive(self.m, self.mu, self.mv, self.e, self.volume)
+        
 
     def calc_all(self):
         if self.boundary_points == []:
@@ -57,6 +70,9 @@ class Cell:
             self.faces.append(Face(p1,p2))
             self.faces.append(Face(p3,p2))
             self.faces.append(Face(p1,p3))
+            for f in self.faces:
+                # Tell the newly created faces, that this cell (self) is connected to it
+                f.on_cell(self)
         else: 
             raise Exception("Rectangular cells not yet permitted")
 
@@ -64,15 +80,22 @@ class Cell:
         # loops through all neighbors, its faces and compares every one with own faces
         # if it is the same, the neigbors face is taken, if not the own cell is keptcl
 
+        # in all neighbors brows all their faces
         for n in self.neighbors:
-
             for j in range(len(n.faces)):
                 fn = n.faces[j]
+
+                # for one face of the neighbor cell brows all of the own faces
                 for i in range(len(self.faces)):
                     f = self.faces[i]
                     equal = f.is_equal_to(fn)
+
+                    # if neighbor cell fn is equal to the own set the own
+                    # cell to this cell 
                     if equal:
                         self.faces[i] = fn
+                         # tell the face that this cell (self) is connected to it
+                        fn.on_cell(self) 
 
     def calc_center(self):
         # Calculating the center by the mean of all boundary points
@@ -152,20 +175,54 @@ class Cell:
 
         p_dx *= 1/v_tot
         p_dy *= 1/v_tot
-        return [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
+
+        self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
+
+    def extrapol_in_time(self, dt, gamma = 5/3):
+        rho_prime = self.rho - 0.5*dt * ( self.u * self.rho_dx + self.rho * self.u_dx + self.v * self.rho_dy + self.rho * self.v_dy)
+        u_prime  = self.u  - 0.5*dt * ( self.u * self.u_dx + self.v * self.u_dy + (1/self.rho) * self.p_dx )
+        v_prime  = self.v  - 0.5*dt * ( self.u * self.v_dx + self.v * self.v_dy + (1/self.rho) * self.p_dy )
+        p_prime   = self.p   - 0.5*dt * ( gamma*self.p * (self.u_dx + self.v_dy)  + self.u * self.p_dx + self.v * self.p_dy )
+
+        self.rho = rho_prime
+        self.p = u_prime
+        self.u = v_prime
+        self.v = p_prime
 
 
     def extrapol2faces(self):
 
-        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.calc_gradients_weighted_sum()
+        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
 
         for [f,fn] in zip(self.faces, self.dis2faces):
             rho_face = self.rho + rho_dx * fn[0] + rho_dy * fn[1]
             u_face = self.u + u_dx * fn[0] + u_dy * fn[1]
             v_face = self.v + v_dx * fn[0] + v_dy * fn[1]
-            p_face = self.p + p_dx * fn[0] + p_dy * fn[1]
+            p_face = self.self.p + p_dx * fn[0] + p_dy * fn[1]
             f.get_primitive_value(rho_face, u_face, v_face, p_face)
     
+    def get_flux_and_apply(self, dt):
+
+
+        for f, cnf in zip(self.faces, self.dis2faces):
+            '''
+            when normal ON face and normal TO face point in one directoin
+            substract the flux from this face 
+                (same direction -> outside -> negative by definition)
+            '''
+            direction = np.dot(f.n,cnf)
+            direction = - direction/abs(direction) # 1 when flow in, -1 when flow out
+
+            vol = f.get_vol_of_neighbor(self) # get the volume of the current neighbor cell
+
+            self.m += direction * vol * f.m *dt
+            self.mu += direction * vol * f.mu * dt
+            self.mv += direction * vol * f.mv * dt
+            self.e += direction * vol * f.e * dt
+        
+        # update primitive values
+        self.calc_primitives()
+
     def __str__(self):
         list_neighbors = ''
         for n in self.neighbors:

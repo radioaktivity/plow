@@ -101,10 +101,13 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
     print("Creating Faces and Neighbor check. Calculating vectors")
    
     print("-"*50)
+    faces_set = set()
     for c in cells:
         c.create_faces()
         c.face_neighbor_check()
         c.calc_all()
+        for f in c.faces:
+            faces_set.add(f)
 
 
     if plot_cells:
@@ -126,4 +129,4 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
         plt.xlim(-0.5, 1.5); plt.ylim(-0.5, 1.5)
 
 
-    return [cells, points_obj]
+    return [cells, points_obj, faces_set]

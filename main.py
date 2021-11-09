@@ -19,23 +19,13 @@ def get_tangent(x,y,dxdy, width=0.1):
     y_tan = dxdy*(x_tan - np.ones([1,10])[0]*x) + np.ones([1, 10])[0]*y
     print(y_tan)
     return [x_tan, y_tan]
-    
 
-def main():
-    atm.gamma
-    t = 0
-    t_end = 100
-    nx = 3
-    ny = 2
-
-    start = timeit.default_timer()
-    [cells, points] = create_mesh(nx=nx,ny=ny, plot_cells=True)
-    print(f"Mesh Runtime : {timeit.default_timer()-start}")
-
+def plot_tangents(cells):
     xplot = []
     rhoplot = []
     tangents = []
     faces = set()
+
     for c in cells:
         print(c)
         print('-'*50)
@@ -58,6 +48,51 @@ def main():
     for tan in tangents:
         plt.plot(tan[0], tan[1], 'r')
     plt.show()
+
+def main():
+    atm.gamma
+    t = 0
+    t_end = 100
+    dt = 0.01
+    nx = 3
+    ny = 2
+
+    # Creating the mesh
+    start = timeit.default_timer()
+    [cells, points, faces] = create_mesh(nx=nx,ny=ny, plot_cells=True)
+    print(f"Total Cell count {len(cells)}")
+    print(f"Mesh Runtime : {timeit.default_timer()-start}")
+    plt.show()
+
+
+    while t<t_end:
+
+        # calculate gradients
+
+        for c in cells:
+            c.calc_gradients_weighted_sum()
+
+            # extrapolate half-step in time
+
+            c.extrapol_in_time()
+
+        # extrapolete in space to face centers
+
+            c.extrapol2faces()
+
+        # compute fluxes
+
+        for f in faces:
+            f.calcFlux()
+    
+        # apply fluxes 
+        for c in cells:
+            c.get_flux_and_apply()
+
+        # update time
+        t += dt
+
+
 
 
 if __name__ == "__main__":

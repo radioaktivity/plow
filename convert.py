@@ -1,4 +1,4 @@
-def getConserved( rho, u, v, p, gamma, vol ):
+def getConserved( primitives, vol, gamma = 5/3 ):
     """
     Calculate the conserved variable from the primitive
     rho      is matrix of cell densities
@@ -12,6 +12,7 @@ def getConserved( rho, u, v, p, gamma, vol ):
     mv     is matrix of y-momentum in cells
     e   is matrix of e in cells
     """
+    [rho, u, v, p ] = primitives
     m   = rho * vol
     mu   = rho * u * vol
     mv   = rho * v * vol
@@ -19,7 +20,7 @@ def getConserved( rho, u, v, p, gamma, vol ):
 
     return m, mu, mv, e
 
-def getPrimitive( m, mu, mv, e, gamma, vol ):
+def getPrimitive(conservatives, vol, gamma=5/3):
     """
     Calculate the primitive variable from the conservative
     m     is matrix of m in cells
@@ -33,6 +34,7 @@ def getPrimitive( m, mu, mv, e, gamma, vol ):
     v       is matrix of cell y-velocity
     p        is matrix of cell pressures
     """
+    [m, mu, mv, e] = conservatives
     rho = m / vol
     u  = mu / rho / vol
     v  = mv / rho / vol

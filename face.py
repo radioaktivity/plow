@@ -14,6 +14,8 @@ class Face:
         self.n = [0, 0]
         self.calc_surfacenormal()
         
+        # cells conected
+        self.cells_connected = []
 
         # primitive values
         [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]=\
@@ -22,9 +24,35 @@ class Face:
             [0.,0.,0.,0.]
 
         # logic switches
+        # When 1. cell hands his values to this face:
+        # isL is set to True
+        # When 2. cell hands his values to this face
+        # isR is also set to True
+        # After the Flux calculation both variables are reset to zero
         self.isL = False
+        self.isR = False
+
+    def on_cell(self, cell):
+        # adds a cell to the cells_connected array to later know
+        # which cells this face is concading
+        self.cells_connected.append(cell)
+    
+    def get_vol_of_neighbor(self, cell):
+        '''
+        returns the volume of the neighbor cell
+
+        self.cells_connected contains two cells
+        the cell that sends the demand 
+        and the cell which is on the other side 
+        of the face
+        '''
+        if self.cells_connected[0] == cell:
+            return self.cells_connected[1].volume
+        else:
+            return self.cells_connected[0].volume
 
     def calc_surfacenormal(self):
+        # Calculate a vector normal to the face 
         tangent = self.boundary_points[1].getVec()-self.boundary_points[0].getVec()
         normal = [-1/self.surface * tangent[1], 
                     1/self.surface *  tangent[0]]
@@ -79,8 +107,20 @@ class Face:
             self.u_R = u
             self.v_R = v
             self.p_R = p
+            
+            self.isR = True
 
-    def getFlux(self, gamma = 1.3):
+    def getFlux(self, gamma = 5/3):
+        if self.isR: # is inner face
+            self.calcFlux(gamma)
+            self.isR = False
+            self.isL = False # Reset the state so next iteration overwrites 
+        else: # is boundary face
+            [self.m, self.mu, self.mv, self.e] = [0,0,0,0]
+            self.isL = False # Reset the state so next iteration overwrites 
+        
+    
+    def calcFlux(self, gamma):
         [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
          [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
 
@@ -115,8 +155,6 @@ class Face:
         
         [self.m, self.mu, self.mv, self.e] = \
         [m, mu, mv, e]
-
-        self.isL = False # Reset the state so next iteration overwrites 
 
     def __str__(self):
         return f"Face between {self.boundary_points[0].__str__()} and {self.boundary_points[1].__str__()} center : {self.center}"
