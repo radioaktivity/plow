@@ -67,7 +67,7 @@ class Face:
         # assigns primitive values to L 
         # if L is already full assigns to R
 
-        if self.isL:
+        if not(self.isL):
             self.rho_L = rho
             self.u_L = u 
             self.v_L = v

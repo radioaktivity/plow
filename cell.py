@@ -154,6 +154,18 @@ class Cell:
         p_dy *= 1/v_tot
         return [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
 
+
+    def extrapol2faces(self):
+
+        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.calc_gradients_weighted_sum()
+
+        for [f,fn] in zip(self.faces, self.dis2faces):
+            rho_face = self.rho + rho_dx * fn[0] + rho_dy * fn[1]
+            u_face = self.u + u_dx * fn[0] + u_dy * fn[1]
+            v_face = self.v + v_dx * fn[0] + v_dy * fn[1]
+            p_face = self.p + p_dx * fn[0] + p_dy * fn[1]
+            f.get_primitive_value(rho_face, u_face, v_face, p_face)
+    
     def __str__(self):
         list_neighbors = ''
         for n in self.neighbors:
