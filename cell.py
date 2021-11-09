@@ -235,10 +235,10 @@ class Cell:
                 f"#Faces: {[f.__str__() for f in self.faces]}\n"+\
                 f"#volume: {self.volume}\n________________________________________________________________________"
     def __str__(self):
-        return f'#Cell {self.number}, '+\
-                f'primitives: {self.rho, self.u, self.v, self.p}'+\
-                f'gradients: {self.gradients}'+\
-                f'conserved: {self.m, self.mu, self.mv, self.e}'+\
+        return f'#Cell {self.number}, \n'+\
+                f'primitives: rho {self.rho}, u {self.u}, v {self.v}, p {self.p} \n'+\
+                f'gradients: {self.gradients} \n'+\
+                f'conserved: m, mu, mv, e {self.m, self.mu, self.mv, self.e}'+\
                 f'\n________________________________________________________________________'
 
 if __name__ == "__main__":

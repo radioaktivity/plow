@@ -64,6 +64,7 @@ def main():
 
         for f in faces:
             f.getFlux()
+            print(f)
 
         possible_dts = []
 

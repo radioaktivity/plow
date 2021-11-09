@@ -50,7 +50,10 @@ class Face:
         of the face
         '''
         if self.cells_connected[0] == cell:
-            return self.cells_connected[1].volume
+            if len(self.cells_connected) == 2:
+                return self.cells_connected[1].volume
+            else:
+                return 0
         else:
             return self.cells_connected[0].volume
 
@@ -145,7 +148,7 @@ class Face:
         mv   = momx_star * momy_star/rho_star
         e = (en_star+P_star) * momx_star/rho_star
 
-
+        print("############# gamma*p_L/rho_L : ",gamma*p_L/rho_L )
         # find wavespeeds
         C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
         C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)
@@ -161,7 +164,10 @@ class Face:
         [m, mu, mv, e]
 
     def __str__(self):
-        return f"Face between {self.boundary_points[0].__str__()} and {self.boundary_points[1].__str__()} center : {self.center}"
+        return f"Face {str(hex(id(self)))}\n"+\
+            '[rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \n'+\
+            f'{ [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]}\n'+\
+                '___________________________________________'
 
 
 if __name__ == "__main__":
