@@ -1,5 +1,6 @@
 from numpy import true_divide
 from point import *
+from global_proporties import *
 
 class Face:
     def __init__(self, p1:Point, p2:Point):
@@ -143,6 +144,7 @@ class Face:
         mu   = momx_star**2/rho_star + P_star
         mv   = momx_star * momy_star/rho_star
         e = (en_star+P_star) * momx_star/rho_star
+
 
         # find wavespeeds
         C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)

@@ -18,8 +18,8 @@ class Cell:
         self.center = Point()
         self.boundary_points = []
         self.volume = 0 # or surface in 2D
-        self.dis2faces = [np.zeros([2,1]),np.zeros([2,1]),np.zeros([2,1])]
-        self.dis2neighbors = [np.zeros([2,1]), np.zeros([2,1]), np.zeros([2,1])]
+        self.dis2faces = [None,None,None]
+        self.dis2neighbors = [None, None, None]
         self.longest_side = 0 # needed for courant number
 
         # primitives
@@ -225,7 +225,7 @@ class Cell:
         # update primitive values
         self.calc_primitives()
 
-    def __str__(self):
+    def _str__(self):
         list_neighbors = ''
         for n in self.neighbors:
             list_neighbors = list_neighbors + f';{n.number}\n'
@@ -234,6 +234,12 @@ class Cell:
                 f"#Faces: {[f for f in self.faces]}\n"+\
                 f"#Faces: {[f.__str__() for f in self.faces]}\n"+\
                 f"#volume: {self.volume}\n________________________________________________________________________"
+    def __str__(self):
+        return f'#Cell {self.number}, '+\
+                f'primitives: {self.rho, self.u, self.v, self.p}'+\
+                f'gradients: {self.gradients}'+\
+                f'conserved: {self.m, self.mu, self.mv, self.e}'+\
+                f'\n________________________________________________________________________'
 
 if __name__ == "__main__":
 

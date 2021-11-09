@@ -59,8 +59,7 @@ class Point(object):
 if __name__ == "__main__":
     p1 = Point(np.array([0,0]))
     p2 = Point(np.array([0,0]))
-    z = p1
-    del z
-    print(p1)
-    print(p2)
-    print(p1 == z)
+
+    print([p1,p2])
+
+    print(hex(id(p1)))

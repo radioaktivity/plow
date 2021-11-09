@@ -2,6 +2,8 @@ import csv
 import numpy as np
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
+
+plt.rcParams.update({'font.size': 2})
 from scipy.ndimage.interpolation import zoom
 
 from cell import *
@@ -11,7 +13,6 @@ from face import *
 
 def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
 
-    #Your statements here
 
     # Create point map as well as delaunay triangles
 
@@ -128,5 +129,10 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
 
         plt.xlim(-0.5, 1.5); plt.ylim(-0.5, 1.5)
 
+        for c in  cells:
+            plt.text(c.center.X,c.center.Y+c.longest_side/20, str(hex(id(c))))
+        for f in faces_set:
+            plt.text(f.center.X,f.center.Y+f.surface/20, str(hex(id(f))))
 
+    plt.savefig("mesh.pdf")
     return [cells, points_obj, faces_set]
