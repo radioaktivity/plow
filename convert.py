@@ -1,3 +1,5 @@
+from global_proporties import *
+
 def getConserved( rho, u, v, p, vol, gamma = 5/3 ):
     """
     Calculate the conserved variable from the primitive

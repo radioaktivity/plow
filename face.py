@@ -20,6 +20,8 @@ class Face:
         # primitive values
         [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]=\
             [0.,0.,0.,0.,0.,0.,0.,0.]
+        
+        # conserved values
         [self.m, self.mu, self.mv, self.e] = \
             [0.,0.,0.,0.]
 

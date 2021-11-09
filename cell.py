@@ -4,7 +4,7 @@ import random
 from point import *
 from face import *
 from convert import *
-
+from global_proporties import *
 
 class Cell:
     def __init__(self, number):
@@ -20,7 +20,7 @@ class Cell:
         self.volume = 0 # or surface in 2D
         self.dis2faces = [np.zeros([2,1]),np.zeros([2,1]),np.zeros([2,1])]
         self.dis2neighbors = [np.zeros([2,1]), np.zeros([2,1]), np.zeros([2,1])]
-
+        self.longest_side = 0 # needed for courant number
 
         # primitives
         self.rho = 0
@@ -34,6 +34,7 @@ class Cell:
         self.mu = 0
         self.mv = 0
         self.e = 0
+
 
     def calc_primitives(self):
         self.rho, self.u, self.v, self.p = \
@@ -115,6 +116,7 @@ class Cell:
         s = 0.5*(a+b+c)
         surface = np.sqrt(s*(s-a)*(s-b)*(s-c))
         self.volume = surface  
+        self.longest_side = max([a,b,c])
     
     def calc_distances_neigbhors(self):
         # Calculates distances to all neigbors of the cell
@@ -179,10 +181,11 @@ class Cell:
         self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
 
     def extrapol_in_time(self, dt, gamma = 5/3):
-        rho_prime = self.rho - 0.5*dt * ( self.u * self.rho_dx + self.rho * self.u_dx + self.v * self.rho_dy + self.rho * self.v_dy)
-        u_prime  = self.u  - 0.5*dt * ( self.u * self.u_dx + self.v * self.u_dy + (1/self.rho) * self.p_dx )
-        v_prime  = self.v  - 0.5*dt * ( self.u * self.v_dx + self.v * self.v_dy + (1/self.rho) * self.p_dy )
-        p_prime   = self.p   - 0.5*dt * ( gamma*self.p * (self.u_dx + self.v_dy)  + self.u * self.p_dx + self.v * self.p_dy )
+        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
+        rho_prime = self.rho - 0.5*dt * ( self.u * rho_dx + self.rho * u_dx + self.v * rho_dy + self.rho * v_dy)
+        u_prime  = self.u  - 0.5*dt * ( self.u * u_dx + self.v * u_dy + (1/self.rho) * p_dx )
+        v_prime  = self.v  - 0.5*dt * ( self.u * v_dx + self.v * v_dy + (1/self.rho) * p_dy )
+        p_prime   = self.p   - 0.5*dt * ( gamma*self.p * (u_dx + v_dy)  + self.u * p_dx + self.v * p_dy )
 
         self.rho = rho_prime
         self.p = u_prime
@@ -198,11 +201,10 @@ class Cell:
             rho_face = self.rho + rho_dx * fn[0] + rho_dy * fn[1]
             u_face = self.u + u_dx * fn[0] + u_dy * fn[1]
             v_face = self.v + v_dx * fn[0] + v_dy * fn[1]
-            p_face = self.self.p + p_dx * fn[0] + p_dy * fn[1]
+            p_face = self.p + p_dx * fn[0] + p_dy * fn[1]
             f.get_primitive_value(rho_face, u_face, v_face, p_face)
     
     def get_flux_and_apply(self, dt):
-
 
         for f, cnf in zip(self.faces, self.dis2faces):
             '''

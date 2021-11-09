@@ -33,7 +33,7 @@ def plot_tangents(cells):
         c.extrapol2faces()
         xplot.append(c.center.X)
         rhoplot.append(c.rho)
-        tangents.append(get_tangent(c.center.X, c.rho, rho_dx, width=1/(3*nx)))
+        tangents.append(get_tangent(c.center.X, c.rho, rho_dx, width=1/2 * c.longest_side))
         for f in c.faces:
             faces.add(f)
 
@@ -49,6 +49,7 @@ def plot_tangents(cells):
         plt.plot(tan[0], tan[1], 'r')
     plt.show()
 
+
 def main():
     atm.gamma
     t = 0
@@ -56,25 +57,35 @@ def main():
     dt = 0.01
     nx = 3
     ny = 2
+    courant_fac = 0.4
 
     # Creating the mesh
     start = timeit.default_timer()
     [cells, points, faces] = create_mesh(nx=nx,ny=ny, plot_cells=True)
     print(f"Total Cell count {len(cells)}")
     print(f"Mesh Runtime : {timeit.default_timer()-start}")
-    plt.show()
+
+    possible_dts = []
+    for c in cells:
+        m, mu, mv, e = getConserved(np.random.random(1)[0], np.random.random(1)[0], 
+                                    np.random.random(1)[0], np.random.random(1)[0],
+                                    c.volume)
+        c.calc_primitives()
+
+
+        possible_dts.append(courant_fac * np.min( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
+    dt = min(possible_dts)
 
 
     while t<t_end:
 
-        # calculate gradients
-
         for c in cells:
+            # calculate gradients
             c.calc_gradients_weighted_sum()
 
             # extrapolate half-step in time
 
-            c.extrapol_in_time()
+            c.extrapol_in_time(dt)
 
         # extrapolete in space to face centers
 
@@ -84,14 +95,21 @@ def main():
 
         for f in faces:
             f.calcFlux()
-    
+
+        possible_dts = []
+
         # apply fluxes 
         for c in cells:
-            c.get_flux_and_apply()
+            c.get_flux_and_apply()      
+
+        # Calculate new dt by the courant number in every cell and taking the smallest result
+            possible_dts.append(courant_fac * np.min( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
+        dt = min(possible_dts)
 
         # update time
         t += dt
-
+    
+        plt.show()
 
 
 
