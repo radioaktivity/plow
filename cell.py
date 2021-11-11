@@ -1,6 +1,8 @@
 import numpy as np
 import random
 
+from numpy import linalg
+
 from point import *
 from face import *
 from convert import *
@@ -146,22 +148,40 @@ class Cell:
         
         [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]=\
             [0.,0.,0.,0.,0.,0.,0.,0.]
-
+        version1 = False
+        
         for [n,cn] in zip(self.neighbors, self.dis2neighbors):
 
+            # cos(theta) -> theta : angle between cn and x-axis
+            # when cn parallel to x-axis cs_x==0 
+            # => gradients in this direction will be zero
+            cs_x = (cn[0])/np.linalg.norm(cn) 
+            # cos(phi) -> phi : angle between cn and y-axis
+            cs_y = (cn[1])/np.linalg.norm(cn)
+
             vol.append(n.volume)
-
-            if not(cn[0] == 0): # When 0 centers lie in the same x so no gradient in x-Direction of this cell
-                rho_dx += n.volume * (self.rho - n.rho)/(cn[0])
-                u_dx += n.volume * (self.u - n.u)/(cn[0])
-                v_dx += n.volume * (self.v - n.v)/(cn[0])
-                p_dx += n.volume * (self.p - n.p)/(cn[0])
-
-            if not(cn[1]==0):
-                rho_dy += n.volume * (self.rho - n.rho)/(cn[1])
-                u_dy += n.volume * (self.u - n.u)/(cn[1])
-                v_dy += n.volume * (self.v - n.v)/(cn[1])
-                p_dy += n.volume * (self.p - n.p)/(cn[1])
+            if version1:
+                if not(cn[0] == 0):
+                    rho_dx += n.volume * cs_x * (self.rho - n.rho)/(cn[0])
+                    u_dx += n.volume * cs_x* (self.u - n.u)/(cn[0])
+                    v_dx += n.volume * cs_x* (self.v - n.v)/(cn[0])
+                    p_dx += n.volume * cs_x* (self.p - n.p)/(cn[0])
+                if not(cn[1] == 0): 
+                    rho_dy += n.volume * cs_y* (self.rho - n.rho)/(cn[1])
+                    u_dy += n.volume * cs_y* (self.u - n.u)/(cn[1])
+                    v_dy += n.volume * cs_y* (self.v - n.v)/(cn[1])
+                    p_dy += n.volume * cs_y* (self.p - n.p)/(cn[1])
+            else:
+                if not(cn[0] == 0):
+                    rho_dx += n.volume * cs_x * (self.rho - n.rho)/(cn[0])
+                    u_dx += n.volume * cs_x* (self.u - n.u)/(cn[0])
+                    v_dx += n.volume * cs_x* (self.v - n.v)/(cn[0])
+                    p_dx += n.volume * cs_x* (self.p - n.p)/(cn[0])
+                if not(cn[1] == 0): 
+                    rho_dy += n.volume * cs_y* (self.rho - n.rho)/(cn[1])
+                    u_dy += n.volume * cs_y* (self.u - n.u)/(cn[1])
+                    v_dy += n.volume * cs_y* (self.v - n.v)/(cn[1])
+                    p_dy += n.volume * cs_y* (self.p - n.p)/(cn[1])
 
 
         v_tot = np.sum(vol)

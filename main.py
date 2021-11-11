@@ -3,6 +3,7 @@ from numpy import array
 import scipy.spatial as sp
 import timeit
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 # Import files
 from cell import *
@@ -12,16 +13,26 @@ from numerical_functions import *
 from global_proporties import *
 import mesh_check 
 
+def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
+    c1=np.array(colors.to_rgb(c1))
+    c2=np.array(colors.to_rgb(c2))
+    return colors.to_hex((1-mix)*c1 + mix*c2)
 
 
 def main():
-    atm.gamma
+    
+    # numerical parameters
     t = 0
     t_end = 100
     dt = 0.01
-    nx = 3
-    ny = 2
+    nx = 5
+    ny = 5
     courant_fac = 0.4
+
+    # display parameters
+    c1='blue' #blue
+    c2='red' #green
+    rho_scale = 1
 
     # Creating the mesh
     start = timeit.default_timer()
@@ -64,7 +75,6 @@ def main():
 
         for f in faces:
             f.getFlux()
-            print(f)
 
         possible_dts = []
 
@@ -78,8 +88,15 @@ def main():
 
         # update time
         t += dt
-    
 
+        plt.show()
+        for c in cells:
+            print(f"cell number {c.number} has rho: {c.rho}")
+            color = colorFader(c1,c2,mix=c.rho/rho_scale)
+            plt.fill([c.boundary_points[0].X, c.boundary_points[1].X, c.boundary_points[2].X], 
+                    [c.boundary_points[0].Y, c.boundary_points[1].Y, c.boundary_points[2].Y], color)
+            
+        plt.show()
 
 
 if __name__ == "__main__":

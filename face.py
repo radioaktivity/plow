@@ -130,6 +130,9 @@ class Face:
         [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
          [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
 
+        if (rho_L*rho_R*p_L*p_R)<0:
+            raise Exception
+
         # left and right energies
         en_L = p_L/(gamma-1)+0.5*rho_L * (u_L**2+v_L**2)
         en_R = p_R/(gamma-1)+0.5*rho_R * (u_R**2+v_R**2)
@@ -148,7 +151,6 @@ class Face:
         mv   = momx_star * momy_star/rho_star
         e = (en_star+P_star) * momx_star/rho_star
 
-        print("############# gamma*p_L/rho_L : ",gamma*p_L/rho_L )
         # find wavespeeds
         C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
         C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)

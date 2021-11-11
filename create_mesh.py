@@ -33,7 +33,7 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
     for i in x:
         for j in y:
             if (k % 2) == 0:
-                corr = 0.1
+                corr = 0
             else:
                 corr = 0
             points[k,0] = i + corr
