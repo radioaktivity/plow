@@ -7,6 +7,7 @@ from point import *
 from face import *
 from convert import *
 from global_proporties import *
+from vector_alg import *
 
 class Cell:
     def __init__(self, number):
@@ -21,8 +22,9 @@ class Cell:
         self.boundary_points = []
         self.volume = 0 # or surface in 2D
         self.dis2faces = [None,None,None]
-        self.dis2neighbors = [None, None, None]
+        self.ns_neighbor = [None, None, None]
         self.longest_side = 0 # needed for courant number
+        self.non_orto_angles = [] # goes along with neighbors
 
         # primitives
         self.rho = 0
@@ -80,8 +82,13 @@ class Cell:
             raise Exception("Rectangular cells not yet permitted")
 
     def face_neighbor_check(self):
+        '''
         # loops through all neighbors, its faces and compares every one with own faces
         # if it is the same, the neigbors face is taken, if not the own cell is keptcl
+        n       is the current neighbor
+        fn      is the current neighbor face (index j)
+        f       is the current face of cell (index i)
+        '''
 
         # in all neighbors brows all their faces
         for n in self.neighbors:
@@ -99,7 +106,13 @@ class Cell:
                         self.faces[i] = fn
                          # tell the face that this cell (self) is connected to it
                         fn.on_cell(self) 
-
+    
+    def calc_non_ortho_angles(self):
+        for f in self.faces:
+            n = f.get_neighbor()
+            d = self.center.getVecBetween(n.center)
+            self.non_orto_angles.append(angle_between(f.n,d))
+        
     def calc_center(self):
         # Calculating the center by the mean of all boundary points
         boundary_points_ko =np.zeros([len(self.boundary_points),2])
@@ -124,7 +137,7 @@ class Cell:
         # Calculates distances to all neigbors of the cell
         i = 0
         for n in self.neighbors:
-            self.dis2neighbors[i] = self.center.getVecBetween(n.center)
+            self.ns_neighbor[i] = self.center.getVecBetween(n.center)
             i+=1
 
     def calc_distances_faces(self):
@@ -150,7 +163,7 @@ class Cell:
             [0.,0.,0.,0.,0.,0.,0.,0.]
         version1 = False
         
-        for [n,cn] in zip(self.neighbors, self.dis2neighbors):
+        for [n,cn] in zip(self.neighbors, self.ns_neighbor):
 
             # cos(theta) -> theta : angle between cn and x-axis
             # when cn parallel to x-axis cs_x==0 
@@ -158,6 +171,11 @@ class Cell:
             cs_x = (cn[0])/np.linalg.norm(cn) 
             # cos(phi) -> phi : angle between cn and y-axis
             cs_y = (cn[1])/np.linalg.norm(cn)
+
+            # non orthoganality correction
+
+            # alpha: nonorthogonality vector 
+            alpha = np.arccos()
 
             vol.append(n.volume)
             if version1:
@@ -235,12 +253,10 @@ class Cell:
             direction = np.dot(f.n,cnf)
             direction = - direction/abs(direction) # 1 when flow in, -1 when flow out
 
-            vol = f.get_vol_of_neighbor(self) # get the volume of the current neighbor cell
-
-            self.m += direction * vol * f.m *dt
-            self.mu += direction * vol * f.mu * dt
-            self.mv += direction * vol * f.mv * dt
-            self.e += direction * vol * f.e * dt
+            self.m += direction * f.surface * f.m *dt
+            self.mu += direction * f.surface * f.mu * dt
+            self.mv += direction * f.surface * f.mv * dt
+            self.e += direction * f.surface * f.e * dt
         
         # update primitive values
         self.calc_primitives()

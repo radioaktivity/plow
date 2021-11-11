@@ -40,22 +40,24 @@ class Face:
         # which cells this face is concading
         self.cells_connected.append(cell)
     
-    def get_vol_of_neighbor(self, cell):
+    def get_neighbor(self, cell):
         '''
-        returns the volume of the neighbor cell
+        returns the neighbor cell
 
         self.cells_connected contains two cells
         the cell that sends the demand 
         and the cell which is on the other side 
         of the face
+
+        the cell which sends the demand wants the cell object on the other side returned
         '''
         if self.cells_connected[0] == cell:
             if len(self.cells_connected) == 2:
-                return self.cells_connected[1].volume
+                return self.cells_connected[1]
             else:
-                return 0
+                return False # no neighbor
         else:
-            return self.cells_connected[0].volume
+            return self.cells_connected[0]
 
     def calc_surfacenormal(self):
         # Calculate a vector normal to the face 
@@ -130,8 +132,10 @@ class Face:
         [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
          [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
 
-        if (rho_L*rho_R*p_L*p_R)<0:
-            raise Exception
+        if (rho_L*rho_R)<0:
+            raise Exception("negative density")
+        if (p_L*p_R)<0:
+            raise Exception("negative pressure")
 
         # left and right energies
         en_L = p_L/(gamma-1)+0.5*rho_L * (u_L**2+v_L**2)

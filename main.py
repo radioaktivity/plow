@@ -26,7 +26,7 @@ def main():
     t_end = 100
     dt = 0.01
     nx = 5
-    ny = 5
+    ny = 2
     courant_fac = 0.4
 
     # display parameters
