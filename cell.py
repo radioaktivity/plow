@@ -22,7 +22,7 @@ class Cell:
         self.boundary_points = []
         self.volume = 0 # or surface in 2D
         self.dis2faces = [None,None,None]
-        self.ns_neighbor = [None, None, None]
+        self.ns_neighbor = []
         self.longest_side = 0 # needed for courant number
         self.non_orto_angles = [] # goes along with neighbors
 
@@ -56,6 +56,7 @@ class Cell:
         self.calc_distances_neigbhors()
         self.calc_distances_faces()
         self.calc_volume()
+        self.calc_non_ortho_angles()
 
 
     def set_boundary_points(self, list_of_points:Point):
@@ -106,12 +107,6 @@ class Cell:
                         self.faces[i] = fn
                          # tell the face that this cell (self) is connected to it
                         fn.on_cell(self) 
-    
-    def calc_non_ortho_angles(self):
-        for f in self.faces:
-            n = f.get_neighbor()
-            d = self.center.getVecBetween(n.center)
-            self.non_orto_angles.append(angle_between(f.n,d))
         
     def calc_center(self):
         # Calculating the center by the mean of all boundary points
@@ -132,20 +127,27 @@ class Cell:
         surface = np.sqrt(s*(s-a)*(s-b)*(s-c))
         self.volume = surface  
         self.longest_side = max([a,b,c])
-    
+
+          
     def calc_distances_neigbhors(self):
         # Calculates distances to all neigbors of the cell
-        i = 0
         for n in self.neighbors:
-            self.ns_neighbor[i] = self.center.getVecBetween(n.center)
-            i+=1
+            self.ns_neighbor.append(-1*self.center.getVecBetween(n.center))
+
 
     def calc_distances_faces(self):
         # Calculates distances to all face centers of the cell
         i = 0
         for f in self.faces:
-            self.dis2faces[i] = self.center.getVecBetween(f.center)
+            self.dis2faces[i] = -1*self.center.getVecBetween(f.center)
             i+=1
+
+    def calc_non_ortho_angles(self):
+        for f in self.faces:
+            n = f.get_neighbor(self)
+            if not(n == False): # neighbor = False, when no neighbor exists
+                d = self.center.getVecBetween(n.center)
+                self.non_orto_angles.append(angle_between(f.n,d))
 
     def calc_gradients_weighted_sum(self):
         '''
@@ -168,39 +170,38 @@ class Cell:
             # cos(theta) -> theta : angle between cn and x-axis
             # when cn parallel to x-axis cs_x==0 
             # => gradients in this direction will be zero
-            cs_x = (cn[0])/np.linalg.norm(cn) 
+            cs_x = np.linalg.norm(cn[0])/np.linalg.norm(cn) 
             # cos(phi) -> phi : angle between cn and y-axis
-            cs_y = (cn[1])/np.linalg.norm(cn)
+            cs_y = np.linalg.norm(cn[1])/np.linalg.norm(cn)
 
             # non orthoganality correction
-
-            # alpha: nonorthogonality vector 
-            alpha = np.arccos()
 
             vol.append(n.volume)
             if version1:
                 if not(cn[0] == 0):
-                    rho_dx += n.volume * cs_x * (self.rho - n.rho)/(cn[0])
-                    u_dx += n.volume * cs_x* (self.u - n.u)/(cn[0])
-                    v_dx += n.volume * cs_x* (self.v - n.v)/(cn[0])
-                    p_dx += n.volume * cs_x* (self.p - n.p)/(cn[0])
+                    rho_dx += n.volume * cs_x * (self.rho - n.rho)/np.linalg.norm(cn[0])
+                    u_dx += n.volume * cs_x* (self.u - n.u)/np.linalg.norm(cn[0])
+                    v_dx += n.volume * cs_x* (self.v - n.v)/np.linalg.norm(cn[0])
+                    p_dx += n.volume * cs_x* (self.p - n.p)/np.linalg.norm(cn[0])
                 if not(cn[1] == 0): 
-                    rho_dy += n.volume * cs_y* (self.rho - n.rho)/(cn[1])
-                    u_dy += n.volume * cs_y* (self.u - n.u)/(cn[1])
-                    v_dy += n.volume * cs_y* (self.v - n.v)/(cn[1])
-                    p_dy += n.volume * cs_y* (self.p - n.p)/(cn[1])
+                    rho_dy += n.volume * cs_y* (self.rho - n.rho)/np.linalg.norm(cn[1])
+                    u_dy += n.volume * cs_y* (self.u - n.u)/np.linalg.norm(cn[1])
+                    v_dy += n.volume * cs_y* (self.v - n.v)/np.linalg.norm(cn[1])
+                    p_dy += n.volume * cs_y* (self.p - n.p)/np.linalg.norm(cn[1])
             else:
                 if not(cn[0] == 0):
-                    rho_dx += n.volume * cs_x * (self.rho - n.rho)/(cn[0])
-                    u_dx += n.volume * cs_x* (self.u - n.u)/(cn[0])
-                    v_dx += n.volume * cs_x* (self.v - n.v)/(cn[0])
-                    p_dx += n.volume * cs_x* (self.p - n.p)/(cn[0])
+                    rho_dx += n.volume * cs_x * (self.rho - n.rho)/np.linalg.norm(cn[0])
+                    u_dx += n.volume * cs_x* (self.u - n.u)/np.linalg.norm(cn[0])
+                    v_dx += n.volume * cs_x* (self.v - n.v)/np.linalg.norm(cn[0])
+                    p_dx += n.volume * cs_x* (self.p - n.p)/np.linalg.norm(cn[0])
                 if not(cn[1] == 0): 
-                    rho_dy += n.volume * cs_y* (self.rho - n.rho)/(cn[1])
-                    u_dy += n.volume * cs_y* (self.u - n.u)/(cn[1])
-                    v_dy += n.volume * cs_y* (self.v - n.v)/(cn[1])
-                    p_dy += n.volume * cs_y* (self.p - n.p)/(cn[1])
+                    rho_dy += n.volume * cs_y* (self.rho - n.rho)/np.linalg.norm(cn[1])
+                    u_dy += n.volume * cs_y* (self.u - n.u)/np.linalg.norm(cn[1])
+                    v_dy += n.volume * cs_y* (self.v - n.v)/np.linalg.norm(cn[1])
+                    p_dy += n.volume * cs_y* (self.p - n.p)/np.linalg.norm(cn[1])
 
+            
+        
 
         v_tot = np.sum(vol)
 
@@ -216,6 +217,13 @@ class Cell:
         p_dx *= 1/v_tot
         p_dy *= 1/v_tot
 
+        text_ofset = 0.015
+        plt.text(self.center.X, self.center.Y-text_ofset*1, f'rho_dx:{np.round(rho_dx, decimals=2)}')
+        plt.text(self.center.X, self.center.Y-text_ofset*2, f'u_dx:{np.round(u_dx, decimals=2)}')
+        plt.text(self.center.X, self.center.Y-text_ofset*3, f'v_dx:{np.round(v_dx, decimals=2)}')
+        plt.text(self.center.X, self.center.Y-text_ofset*4, f'p_dx:{np.round(p_dx, decimals=2)}')
+        plt.text(self.center.X, self.center.Y-text_ofset*5, f'vol:{np.round(self.volume, decimals=2)}')
+
         self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
 
     def extrapol_in_time(self, dt, gamma = 5/3):
@@ -230,6 +238,23 @@ class Cell:
         self.u = v_prime
         self.v = p_prime
 
+    def extrapol2faces1stOrder(self):
+
+        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
+
+        for [f,fn] in zip(self.faces, self.dis2faces):
+            rho_face = self.rho 
+            u_face = self.u 
+            v_face = self.v 
+            p_face = self.p 
+            if (rho_face)<0:
+                print(f"cell {self.number} -> negative density")
+                rho_face = 0
+            if (p_face)<0:
+                print(f"cell {self.number} -> negative pressure")
+                p_face = 0
+            f.get_primitive_value(rho_face, u_face, v_face, p_face)
+
 
     def extrapol2faces(self):
 
@@ -240,6 +265,12 @@ class Cell:
             u_face = self.u + u_dx * fn[0] + u_dy * fn[1]
             v_face = self.v + v_dx * fn[0] + v_dy * fn[1]
             p_face = self.p + p_dx * fn[0] + p_dy * fn[1]
+            if (rho_face)<0:
+                print(f"cell {self.number} -> negative density")
+                rho_face = 0
+            if (p_face)<0:
+                print(f"cell {self.number} -> negative pressure")
+                p_face = 0
             f.get_primitive_value(rho_face, u_face, v_face, p_face)
     
     def get_flux_and_apply(self, dt):
@@ -261,20 +292,21 @@ class Cell:
         # update primitive values
         self.calc_primitives()
 
-    def _str__(self):
+    def __str__(self):
         list_neighbors = ''
         for n in self.neighbors:
             list_neighbors = list_neighbors + f';{n.number}\n'
-        return f"#Cell {self.number}, #center {self.center.__str__()}\n with the #Neighbors {list_neighbors} " + \
-            f"and #boundary points \n {[p.__str__() for p in self.boundary_points]} \n" + \
-                f"#Faces: {[f for f in self.faces]}\n"+\
-                f"#Faces: {[f.__str__() for f in self.faces]}\n"+\
-                f"#volume: {self.volume}\n________________________________________________________________________"
-    def __str__(self):
+        return f"#Cell {self.number}, #center {self.center.__str__()}\n"+\
+               f"with the #Neighbors {list_neighbors}\n"+\
+               f"#Faces: {[f for f in self.faces]}"+\
+               f'\n________________________________________________________________________'
+    def _str__(self):
+        non_ortho = np.array(self.non_orto_angles)*180/np.pi
         return f'#Cell {self.number}, \n'+\
                 f'primitives: rho {self.rho}, u {self.u}, v {self.v}, p {self.p} \n'+\
                 f'gradients: {self.gradients} \n'+\
-                f'conserved: m, mu, mv, e {self.m, self.mu, self.mv, self.e}'+\
+                f'conserved: m, mu, mv, e {self.m, self.mu, self.mv, self.e}\n'+\
+                f'non orthogonality to neighbors: {non_ortho}\n'+\
                 f'\n________________________________________________________________________'
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
-from numpy import true_divide
+import matplotlib.pyplot as plt
+
 from point import *
 from global_proporties import *
+from vector_alg import *
 
 class Face:
     def __init__(self, p1:Point, p2:Point):
@@ -169,7 +171,15 @@ class Face:
         [self.m, self.mu, self.mv, self.e] = \
         [m, mu, mv, e]
 
+    def display_normals(self):
+        display_vector(self.center.getVec(), self.n, color='k')
+
     def __str__(self):
+
+        return f'Face {str(hex(id(self)))}\n'+\
+                f'Cells connected {self.cells_connected}\n'+\
+                '____________________________________________________________'
+    def _str__(self):
         return f"Face {str(hex(id(self)))}\n"+\
             '[rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \n'+\
             f'{ [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]}\n'+\

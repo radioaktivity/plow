@@ -130,9 +130,13 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
         plt.xlim(-0.5, 1.5); plt.ylim(-0.5, 1.5)
 
         for c in  cells:
-            plt.text(c.center.X,c.center.Y+c.longest_side/20, str(hex(id(c))))
+            #plt.text(c.center.X,c.center.Y+c.longest_side/20, str(hex(id(c))))
+            for vec in c.ns_neighbor:
+                display_vector(c.center.getVec(), vec, color="b", scale=5)
+            for vec in c.dis2faces:
+                display_vector(c.center.getVec(), vec, color="r", scale=5)
         for f in faces_set:
-            plt.text(f.center.X,f.center.Y+f.surface/20, str(hex(id(f))))
+            #plt.text(f.center.X,f.center.Y+f.surface/20, str(hex(id(f))))
+            f.display_normals()
 
-    plt.savefig("mesh.pdf")
     return [cells, points_obj, faces_set]
