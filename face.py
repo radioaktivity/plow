@@ -24,9 +24,10 @@ class Face:
         [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]=\
             [0.,0.,0.,0.,0.,0.,0.,0.]
         
-        # conserved values
-        [self.m, self.mu, self.mv, self.e] = \
-            [0.,0.,0.,0.]
+        self.flux_Mass   = 0
+        self.flux_Momx   = 0
+        self.flux_Momy   = 0
+        self.flux_Energy = 0
 
         # logic switches
         # When 1. cell hands his values to this face:
@@ -122,11 +123,15 @@ class Face:
 
     def getFlux(self, gamma = 5/3):
         if self.isR: # is inner face
-            self.calcFlux(gamma)
+            self.flux_Mass, self.flux_Momx, self.flux_Momy, self.flux_Energy = \
+                self.calcFlux(gamma)
             self.isR = False
             self.isL = False # Reset the state so next iteration overwrites 
         else: # is boundary face
-            [self.m, self.mu, self.mv, self.e] = [0,0,0,0]
+            self.flux_Mass   = 0
+            self.flux_Momx   = 0
+            self.flux_Momy   = 0
+            self.flux_Energy = 0
             self.isL = False # Reset the state so next iteration overwrites 
         
     
@@ -134,11 +139,8 @@ class Face:
         [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
          [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
 
-        if (rho_L*rho_R)<0:
-            raise Exception("negative density")
         if (p_L*p_R)<0:
             raise Exception("negative pressure")
-
         # left and right energies
         en_L = p_L/(gamma-1)+0.5*rho_L * (u_L**2+v_L**2)
         en_R = p_R/(gamma-1)+0.5*rho_R * (u_R**2+v_R**2)
@@ -148,28 +150,28 @@ class Face:
         momx_star = 0.5*(rho_L * u_L + rho_R * u_R)
         momy_star = 0.5*(rho_L * v_L + rho_R * v_R)
         en_star   = 0.5*(en_L + en_R)
-
+        
         P_star = (gamma-1)*(en_star-0.5*(momx_star**2+momy_star**2)/rho_star)
-
+        
         # compute fluxes (local Lax-Friedrichs/Rusanov)
-        m   = momx_star
-        mu   = momx_star**2/rho_star + P_star
-        mv   = momx_star * momy_star/rho_star
-        e = (en_star+P_star) * momx_star/rho_star
-
+        flux_Mass   = momx_star
+        flux_Momx   = momx_star**2/rho_star + P_star
+        flux_Momy   = momx_star * momy_star/rho_star
+        flux_Energy = (en_star+P_star) * momx_star/rho_star
+        
         # find wavespeeds
         C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
         C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)
         C = np.maximum( C_L, C_R )
-
-        # add stabilizing diffusive term
-        m   -= C * 0.5 * (rho_L - rho_R)
-        mu   -= C * 0.5 * (rho_L * u_L - rho_R * u_R)
-        mv   -= C * 0.5 * (rho_L * v_L - rho_R * v_R)
-        e -= C * 0.5 * ( en_L - en_R )
+        plt.text(self.center.X, self.center.Y-atm.linespacing*1, f'WaveSpeed:{np.round(C, decimals=2)}')
         
-        [self.m, self.mu, self.mv, self.e] = \
-        [m, mu, mv, e]
+        # add stabilizing diffusive term
+        flux_Mass   -= C * 0.5 * (rho_L - rho_R)
+        flux_Momx   -= C * 0.5 * (rho_L * u_L - rho_R * u_R)
+        flux_Momy   -= C * 0.5 * (rho_L * v_L - rho_R * v_R)
+        flux_Energy -= C * 0.5 * ( en_L - en_R )
+
+        return flux_Mass, flux_Momx, flux_Momy, flux_Energy
 
     def display_normals(self):
         display_vector(self.center.getVec(), self.n, color='k')

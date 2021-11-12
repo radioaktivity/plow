@@ -215,13 +215,6 @@ class Cell:
         p_dx *= 1/volume_all_neighbors
         p_dy *= 1/volume_all_neighbors
 
-        text_ofset = 0.015
-        plt.text(self.center.X, self.center.Y-text_ofset*1, f'rho_dx:{np.round(rho_dx, decimals=2)}')
-        plt.text(self.center.X, self.center.Y-text_ofset*2, f'u_dx:{np.round(u_dx, decimals=2)}')
-        plt.text(self.center.X, self.center.Y-text_ofset*3, f'v_dx:{np.round(v_dx, decimals=2)}')
-        plt.text(self.center.X, self.center.Y-text_ofset*4, f'p_dx:{np.round(p_dx, decimals=2)}')
-        plt.text(self.center.X, self.center.Y-text_ofset*5, f'vol:{np.round(self.volume, decimals=2)}')
-        plt.text(self.center.X, self.center.Y-text_ofset*6, f'vec_x:{np.round(self.ns_neighbor[0][0], decimals=2)}')
         self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
 
     def extrapol_in_time(self, dt, gamma = 5/3):
@@ -282,10 +275,11 @@ class Cell:
             direction = np.dot(f.n,cnf)
             direction = - direction/abs(direction) # 1 when flow in, -1 when flow out
 
-            self.m += direction * f.surface * f.m *dt
-            self.mu += direction * f.surface * f.mu * dt
-            self.mv += direction * f.surface * f.mv * dt
-            self.e += direction * f.surface * f.e * dt
+            direction = -1 # Try
+            self.m += direction * f.surface * f.flux_Mass *dt
+            self.mu += direction * f.surface * f.flux_Momx * dt
+            self.mv += direction * f.surface * f.flux_Momy * dt
+            self.e += direction * f.surface * f.flux_Energy * dt
         
         # update primitive values
         self.calc_primitives()

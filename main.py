@@ -17,6 +17,10 @@ from mesh_check import *
 from vector_alg import *
 
 def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
+    if mix>1:
+        mix = 1
+    if mix<0:
+        mix = 0
     c1=np.array(colors.to_rgb(c1))
     c2=np.array(colors.to_rgb(c2))
     return colors.to_hex((1-mix)*c1 + mix*c2)
@@ -41,14 +45,14 @@ def main():
     t = 0
     t_end = 100
     dt = 0.01
-    nx = 4
-    ny = 4
+    nx = 3
+    ny = 3
     courant_fac = 0.4
 
     # display parameters
     c1='blue' #blue
     c2='red' #green
-    rho_scale = 10
+    rho_scale = 1.23
 
     # Creating the mesh
     start = timeit.default_timer()
@@ -62,8 +66,8 @@ def main():
     possible_dts = []
     i=0
     for c in cells:
-        if c.number in [2,3,6,7,8,9]:
-            c.m, c.mu, c.mv, c.e = getConserved(1.225, 5, 0, 100, c.volume)
+        if c.number in [0,1,2,3,4,5,6,7]:
+            c.m, c.mu, c.mv, c.e = getConserved(1.225, 5, 2, 100, c.volume)
         else:
             c.m, c.mu, c.mv, c.e = getConserved(1.225, 5, 0, 100, c.volume)
 
@@ -88,26 +92,19 @@ def main():
         for c in cells:
             c.extrapol2faces()
 
-
-        for c in cells:
-            text_values_in_cell(c)
-
-        for f in faces:
-            
-        
-
-
-        file_name = 'mesh'+f'{np.round(dt,decimals=3)}'+'.pdf'
-        plt.savefig(file_name)
-
-        subprocess.Popen(['xdg-open '+file_name], shell=True)
-
         # compute fluxes
 
         for f in faces:
             f.getFlux()
 
         possible_dts = []
+
+
+        for c in cells:
+            text_values_in_cell(c)
+
+        for f in faces:
+            text_values_on_face(f)
 
         
         # apply fluxes 
@@ -128,9 +125,12 @@ def main():
                     [c.boundary_points[0].Y, c.boundary_points[1].Y, c.boundary_points[2].Y], color)
         
         
+        file_name = 'mesh'+f'{np.round(t,decimals=3)}'+'.pdf'
+        plt.savefig(file_name)
+
+        # subprocess.Popen(['xdg-open '+file_name], shell=True)
         
-        
-        break 
+    
         
 
 

@@ -3,7 +3,7 @@ import numpy as np
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
 
-plt.rcParams.update({'font.size': 2})
+plt.rcParams.update({'font.size': 1})
 from scipy.ndimage.interpolation import zoom
 
 from cell import *
@@ -13,11 +13,14 @@ from face import *
 
 def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
 
+    # Dimensions of flowfield [m]
+    dimension_x = atm.dimension_x
+    dimension_y = atm.dimension_y
 
     # Create point map as well as delaunay triangles
 
-    x = np.linspace(0,1,nx)
-    y = np.linspace(0,1,ny)
+    x = np.linspace(0,dimension_x,nx)
+    y = np.linspace(0,dimension_y,ny)
 
 
     i = 0
@@ -127,7 +130,7 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
 
             plt.text(p[0], p[1], '#%d' % j, ha='center') # label triangles
 
-        plt.xlim(-0.5, 1.5); plt.ylim(-0.5, 1.5)
+        # plt.xlim(-0.5, 1.5); plt.ylim(-0.5, 1.5)
 
         for c in  cells:
             #plt.text(c.center.X,c.center.Y+c.longest_side/20, str(hex(id(c))))
