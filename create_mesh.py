@@ -115,7 +115,7 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
         print("Plotting Cells")
         print("-"*50)
         plt.triplot(points[:,0], points[:,1], tri.simplices)
-
+        plt.grid(True)
         plt.plot(points[:,0], points[:,1], 'o')
         for j, p in enumerate(points):
 

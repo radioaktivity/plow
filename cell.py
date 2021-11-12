@@ -28,9 +28,9 @@ class Cell:
 
         # primitives
         self.rho = 0
-        self.p = 0
         self.u = 0
         self.v = 0
+        self.p = 0
         self.gradients = None
 
         # conservatives
@@ -200,22 +200,20 @@ class Cell:
                     v_dy += n.volume * cs_y* (self.v - n.v)/np.linalg.norm(cn[1])
                     p_dy += n.volume * cs_y* (self.p - n.p)/np.linalg.norm(cn[1])
 
-            
-        
 
-        v_tot = np.sum(vol)
+        volume_all_neighbors = np.sum(vol)
 
-        rho_dx *= 1/v_tot
-        rho_dy *= 1/v_tot
+        rho_dx *= 1/volume_all_neighbors
+        rho_dy *= 1/volume_all_neighbors
 
-        u_dx *= 1/v_tot
-        u_dy *= 1/v_tot
+        u_dx *= 1/volume_all_neighbors
+        u_dy *= 1/volume_all_neighbors
 
-        v_dx *= 1/v_tot
-        v_dy *= 1/v_tot
+        v_dx *= 1/volume_all_neighbors
+        v_dy *= 1/volume_all_neighbors
 
-        p_dx *= 1/v_tot
-        p_dy *= 1/v_tot
+        p_dx *= 1/volume_all_neighbors
+        p_dy *= 1/volume_all_neighbors
 
         text_ofset = 0.015
         plt.text(self.center.X, self.center.Y-text_ofset*1, f'rho_dx:{np.round(rho_dx, decimals=2)}')
@@ -223,7 +221,7 @@ class Cell:
         plt.text(self.center.X, self.center.Y-text_ofset*3, f'v_dx:{np.round(v_dx, decimals=2)}')
         plt.text(self.center.X, self.center.Y-text_ofset*4, f'p_dx:{np.round(p_dx, decimals=2)}')
         plt.text(self.center.X, self.center.Y-text_ofset*5, f'vol:{np.round(self.volume, decimals=2)}')
-
+        plt.text(self.center.X, self.center.Y-text_ofset*6, f'vec_x:{np.round(self.ns_neighbor[0][0], decimals=2)}')
         self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
 
     def extrapol_in_time(self, dt, gamma = 5/3):
@@ -234,9 +232,9 @@ class Cell:
         p_prime   = self.p   - 0.5*dt * ( gamma*self.p * (u_dx + v_dy)  + self.u * p_dx + self.v * p_dy )
 
         self.rho = rho_prime
-        self.p = u_prime
-        self.u = v_prime
-        self.v = p_prime
+        self.u = u_prime
+        self.v = v_prime
+        self.p = p_prime
 
     def extrapol2faces1stOrder(self):
 

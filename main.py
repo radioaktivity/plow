@@ -4,6 +4,8 @@ import scipy.spatial as sp
 import timeit
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import subprocess
+
 
 # Import files
 from cell import *
@@ -18,6 +20,19 @@ def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0)
     c1=np.array(colors.to_rgb(c1))
     c2=np.array(colors.to_rgb(c2))
     return colors.to_hex((1-mix)*c1 + mix*c2)
+
+def print_cell(cell, number=10):
+    if (cell.number == number):
+        print('_'*50)
+        print("Cell 10 Values:")
+        print(cell.u)
+        print(cell.v)
+        print('Neighbors')
+        for n in cell.neighbors:
+            print('Cell', n.number)
+            print(n.u)
+            print(n.v)
+            print('-'*30)
 
 
 def main():
@@ -51,9 +66,8 @@ def main():
             c.m, c.mu, c.mv, c.e = getConserved(1.225, 5, 0, 100, c.volume)
         else:
             c.m, c.mu, c.mv, c.e = getConserved(1.225, 5, 0, 100, c.volume)
-        
-        c.calc_primitives()
 
+        c.calc_primitives()
 
         possible_dts.append(courant_fac * np.min( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
         i+=1
@@ -66,21 +80,28 @@ def main():
         for c in cells:
             # calculate gradients
             c.calc_gradients_weighted_sum()
-            # extrapolate half-step in time
-            
-            text_values_in_cell(c)
+
+        for c in cells:
             c.extrapol_in_time(dt)
+        
 
-            # extrapolete in space to face centers
-
-            #plot_tangent(c)
-
+        for c in cells:
             c.extrapol2faces()
 
 
-        plt.savefig("mesh.pdf")
-        plt.show()
+        for c in cells:
+            text_values_in_cell(c)
+
+        for f in faces:
+            
         
+
+
+        file_name = 'mesh'+f'{np.round(dt,decimals=3)}'+'.pdf'
+        plt.savefig(file_name)
+
+        subprocess.Popen(['xdg-open '+file_name], shell=True)
+
         # compute fluxes
 
         for f in faces:
@@ -105,7 +126,11 @@ def main():
             color = colorFader(c1,c2,mix=c.rho/rho_scale)
             plt.fill([c.boundary_points[0].X, c.boundary_points[1].X, c.boundary_points[2].X], 
                     [c.boundary_points[0].Y, c.boundary_points[1].Y, c.boundary_points[2].Y], color)
-            
+        
+        
+        
+        
+        break 
         
 
 
