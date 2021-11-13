@@ -278,13 +278,13 @@ class Cell:
             # direction = -1 # Try
             
             # X-Direction 
-            A_ref = np.abs(np.cos(f.theta))*f.surface
+            A_ref = np.cos(f.theta)*f.surface
             self.m -=  A_ref * f.flux_Mass_X *dt
             self.mu -=  A_ref * f.flux_Momx_X * dt
             self.mv -=  A_ref * f.flux_Momy_X * dt
             self.e -=  A_ref * f.flux_Energy_X * dt
 
-            A_ref = np.abs(np.cos(f.theta))*f.surface
+            A_ref = np.cos(f.theta)*f.surface
             self.m -=  A_ref * f.flux_Mass_Y *dt
             self.mu -=  A_ref * f.flux_Momx_Y * dt
             self.mv -=  A_ref * f.flux_Momy_Y * dt

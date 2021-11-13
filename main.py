@@ -67,9 +67,9 @@ def main():
     i=0
     for c in cells:
         if c.number in [0,1,2,3,4,5,6,7]:
-            c.m, c.mu, c.mv, c.e = getConserved(1.225, 5, 2, 100, c.volume)
+            c.m, c.mu, c.mv, c.e = getConserved(100, 5, 2, 100, c.volume)
         else:
-            c.m, c.mu, c.mv, c.e = getConserved(1.225, 5, 0, 100, c.volume)
+            c.m, c.mu, c.mv, c.e = getConserved(100, 5, 0, 100, c.volume)
 
         c.calc_primitives()
 
@@ -78,7 +78,7 @@ def main():
     dt = min(possible_dts)
     print(f"*** Starting timestep dt: {dt}")
 
-
+    i = 0
     while t<t_end:
 
         for c in cells:
@@ -122,16 +122,19 @@ def main():
 
         for c in cells:
             print(f"cell number {c.number} has rho: {c.rho}")
-            color = colorFader(c1,c2,mix=c.rho/rho_scale)
+
+            u_total = np.sqrt(c.u**2+c.v**2)
+            u_total_norm = u_total/100
+            color = colorFader(c1,c2,mix=u_total_norm)
             plt.fill([c.boundary_points[0].X, c.boundary_points[1].X, c.boundary_points[2].X], 
                     [c.boundary_points[0].Y, c.boundary_points[1].Y, c.boundary_points[2].Y], color)
         
         
-        file_name = 'mesh'+f'{1}'+'.pdf'
+        file_name = 'mesh'+f'{i}'+'.pdf'
         plt.savefig(file_name)
-
+        plt.show()
         # subprocess.Popen(['xdg-open '+file_name], shell=True)
-        
+        i+=1
     
         
 
