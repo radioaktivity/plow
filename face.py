@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from convert import getConserved
 
 from point import *
 from global_proporties import *
@@ -24,10 +25,14 @@ class Face:
         [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]=\
             [0.,0.,0.,0.,0.,0.,0.,0.]
         
-        self.flux_Mass   = 0
-        self.flux_Momx   = 0
-        self.flux_Momy   = 0
-        self.flux_Energy = 0
+        self.flux_Mass_X  = 0
+        self.flux_Momx_X   = 0
+        self.flux_Momy_X   = 0
+        self.flux_Energy_X = 0
+        self.flux_Mass_Y  = 0
+        self.flux_Momx_Y   = 0
+        self.flux_Momy_Y   = 0
+        self.flux_Energy_Y = 0
 
         # logic switches
         # When 1. cell hands his values to this face:
@@ -133,7 +138,28 @@ class Face:
             self.flux_Momy   = 0
             self.flux_Energy = 0
             self.isL = False # Reset the state so next iteration overwrites 
-        
+    
+    def calcFlux2(self, gamma):
+        [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
+            [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
+
+        m_L, mu_L, mv_L, e_L = getConserved(rho_L,u_L,v_L,p_L)
+        m_R, mu_R, mv_R, e_R = getConserved(rho_R,u_R,v_R,p_R)
+
+        # find wavespeeds
+        C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
+        C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)
+        C = np.maximum( C_L, C_R )
+
+
+        # F = 0.5 (F_L+F_R) - 0.5 * C * (u_R-u_L)
+        flux_Mass   = 0.5 * (m_L+m_R) - C * 0.5 * (rho_L - rho_R)
+        flux_Momx   = 0.5 *(mu_L+mu_R) - C * 0.5 * (rho_L * u_L - rho_R * u_R)
+        flux_Momy   = 0.5 * (mv_L+mv_R)- C * 0.5 * (rho_L * v_L - rho_R * v_R)
+        flux_Energy = 0.5 * (e_L+e_R) - C * 0.5 * ( e_L - e_R )
+
+        return flux_Mass, flux_Momx, flux_Momy, flux_Energy
+
     
     def calcFlux(self, gamma):
         [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \

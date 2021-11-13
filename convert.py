@@ -1,6 +1,6 @@
 from global_proporties import *
 
-def getConserved( rho, u, v, p, vol, gamma = 5/3 ):
+def getConserved( rho, u, v, p, vol):
     """
     Calculate the conserved variable from the primitive
     rho      is matrix of cell densities
@@ -14,6 +14,7 @@ def getConserved( rho, u, v, p, vol, gamma = 5/3 ):
     mv     is matrix of y-momentum in cells
     e   is matrix of e in cells
     """
+    gamma = atm.gamma
 
     m   = rho * vol
     mu   = rho * u * vol
@@ -22,7 +23,7 @@ def getConserved( rho, u, v, p, vol, gamma = 5/3 ):
 
     return m, mu, mv, e
 
-def getPrimitive(m, mu, mv, e, vol, gamma=5/3):
+def getPrimitive(m, mu, mv, e, vol):
     """
     Calculate the primitive variable from the conservative
     m     is matrix of m in cells
@@ -36,6 +37,7 @@ def getPrimitive(m, mu, mv, e, vol, gamma=5/3):
     v       is matrix of cell y-velocity
     p        is matrix of cell pressures
     """
+    gamma = atm.gamma
     rho = m / vol
     u  = mu / rho / vol
     v  = mv / rho / vol
