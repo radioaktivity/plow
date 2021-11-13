@@ -45,8 +45,8 @@ def main():
     t = 0
     t_end = 100
     dt = 0.01
-    nx = 3
-    ny = 3
+    nx = 20
+    ny = 20
     courant_fac = 0.4
 
     # display parameters
@@ -99,17 +99,19 @@ def main():
 
         possible_dts = []
 
-
-        for c in cells:
-            text_values_in_cell(c)
-
-        for f in faces:
-            text_values_on_face(f)
-
         
         # apply fluxes 
         for c in cells:
             c.get_flux_and_apply(dt)      
+
+
+        for c in cells:
+            text_values_in_cell(c,gradients=True,fluxes=False)
+
+        for f in faces:
+            text_values_on_face(f)
+
+
 
         # Calculate new dt by the courant number in every cell and taking the smallest result
             possible_dts.append(courant_fac * np.min( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
@@ -125,7 +127,7 @@ def main():
                     [c.boundary_points[0].Y, c.boundary_points[1].Y, c.boundary_points[2].Y], color)
         
         
-        file_name = 'mesh'+f'{np.round(t,decimals=3)}'+'.pdf'
+        file_name = 'mesh'+f'{1}'+'.pdf'
         plt.savefig(file_name)
 
         # subprocess.Popen(['xdg-open '+file_name], shell=True)

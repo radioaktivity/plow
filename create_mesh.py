@@ -117,29 +117,32 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
     if plot_cells:
         print("Plotting Cells")
         print("-"*50)
+        
         plt.triplot(points[:,0], points[:,1], tri.simplices)
-        plt.grid(True)
-        plt.plot(points[:,0], points[:,1], 'o')
-        for j, p in enumerate(points):
+        #plt.grid(True)
+        
+        if atm.printtextincells:
+            plt.plot(points[:,0], points[:,1], 'o')
+            for j, p in enumerate(points):
 
-            plt.text(p[0], p[1], j, ha='right') # label the points
+                plt.text(p[0], p[1], j, ha='right') # label the points
 
-        for j, s in enumerate(tri.simplices):
+            for j, s in enumerate(tri.simplices):
 
-            p = points[s].mean(axis=0)
+                p = points[s].mean(axis=0)
 
-            plt.text(p[0], p[1], '#%d' % j, ha='center') # label triangles
+                plt.text(p[0], p[1], '#%d' % j, ha='center') # label triangles
 
         # plt.xlim(-0.5, 1.5); plt.ylim(-0.5, 1.5)
 
-        for c in  cells:
+        #for c in  cells:
             #plt.text(c.center.X,c.center.Y+c.longest_side/20, str(hex(id(c))))
-            for vec in c.ns_neighbor:
-                display_vector(c.center.getVec(), vec, color="b", scale=5)
-            for vec in c.dis2faces:
-                display_vector(c.center.getVec(), vec, color="r", scale=5)
-        for f in faces_set:
+            #for vec in c.ns_neighbor:
+               # display_vector(c.center.getVec(), vec, color="b", scale=5)
+            #for vec in c.dis2faces:
+               # display_vector(c.center.getVec(), vec, color="r", scale=5)
+        #for f in faces_set:
             #plt.text(f.center.X,f.center.Y+f.surface/20, str(hex(id(f))))
-            f.display_normals()
+            #f.display_normals()
 
     return [cells, points_obj, faces_set]

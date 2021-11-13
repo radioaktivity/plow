@@ -17,12 +17,15 @@ class Face:
         self.surface = p1.distance(p2)
         self.n = [0, 0]
         self.calc_surfacenormal()
+        self.theta = 0 # angle to x axis
         
         # cells conected
         self.cells_connected = []
 
         # primitive values
-        [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]=\
+        [self.rho_L_X, self.rho_R_X, self.u_L_X, self.u_R_X, self.v_R_X, self.v_L_X, self.p_L_X, self.p_R_X]=\
+            [0.,0.,0.,0.,0.,0.,0.,0.]
+        [self.rho_L_Y, self.rho_R_Y, self.u_L_Y, self.u_R_Y, self.v_R_Y, self.v_L_Y, self.p_L_Y, self.p_R_Y]=\
             [0.,0.,0.,0.,0.,0.,0.,0.]
         
         self.flux_Mass_X  = 0
@@ -70,9 +73,12 @@ class Face:
     def calc_surfacenormal(self):
         # Calculate a vector normal to the face 
         tangent = self.boundary_points[1].getVec()-self.boundary_points[0].getVec()
+
+        # normal of [a,b] -> 1/norm([a,b]) * [-b, a]
         normal = [-1/self.surface * tangent[1], 
                     1/self.surface *  tangent[0]]
         self.n = normal
+        self.theta = angle_between( np.array([0,1]) , self.n )
 
     def calc_center(self):
         # Takes boundary poitns and sets center 
@@ -106,65 +112,57 @@ class Face:
         else:
             return False
     
-    def get_primitive_value(self, rho, u, v, p):
+    def get_primitive_values(self, rho_face_X, u_face_X, v_face_X, p_face_X,
+                                    rho_face_Y, u_face_Y, v_face_Y, p_face_Y):
         # takes primitive values from one cell 
         # assigns primitive values to L 
         # if L is already full assigns to R
 
         if not(self.isL):
-            self.rho_L = rho
-            self.u_L = u 
-            self.v_L = v
-            self.p_L = p
+            self.rho_L_X, self.rho_L_Y = rho_face_X, rho_face_Y
+            self.u_L_X, self.u_L_Y = u_face_X, u_face_Y
+            self.v_L_X, self.v_L_Y = v_face_X, v_face_Y
+            self.p_L_X, self.p_L_Y = p_face_X, p_face_Y
 
             self.isL = True
         else:
-            self.rho_R = rho
-            self.u_R = u
-            self.v_R = v
-            self.p_R = p
-            
+            self.rho_R_X, self.rho_R_Y = rho_face_X, rho_face_Y
+            self.u_R_X, self.u_R_Y = u_face_X, u_face_Y
+            self.v_R_X, self.v_R_Y = v_face_X, v_face_Y
+            self.p_R_X, self.p_R_Y = p_face_X, p_face_Y
+
             self.isR = True
 
     def getFlux(self, gamma = 5/3):
         if self.isR: # is inner face
-            self.flux_Mass, self.flux_Momx, self.flux_Momy, self.flux_Energy = \
-                self.calcFlux(gamma)
+            self.flux_Mass_X, \
+                self.flux_Momx_X, \
+                self.flux_Momy_X, \
+                self.flux_Energy_X = \
+                    self.calcFlux(self.rho_L_X, self.rho_R_X, 
+                                self.u_L_X, self.u_R_X, 
+                                self.v_L_X, self.v_R_X, 
+                                self.p_L_X, self.p_R_X)
+
+            # notice here momy and momx changed place as well as v_L_Y,v_R_Y and u_L_Y,u_R_Y 
+            self.flux_Mass_Y, \
+                self.flux_Momy_Y, \
+                self.flux_Momx_Y, \
+                self.flux_Energy_Y = \
+                    self.calcFlux(self.rho_L_Y, self.rho_R_Y,
+                                  self.v_L_Y, self.v_R_Y,
+                                  self.u_L_Y, self.u_R_Y, 
+                                  self.p_L_Y, self.p_R_Y)
+
             self.isR = False
             self.isL = False # Reset the state so next iteration overwrites 
         else: # is boundary face
-            self.flux_Mass   = 0
-            self.flux_Momx   = 0
-            self.flux_Momy   = 0
-            self.flux_Energy = 0
+            # Don't change anything
+            # Their standard value is 0
             self.isL = False # Reset the state so next iteration overwrites 
-    
-    def calcFlux2(self, gamma):
-        [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
-            [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
-
-        m_L, mu_L, mv_L, e_L = getConserved(rho_L,u_L,v_L,p_L)
-        m_R, mu_R, mv_R, e_R = getConserved(rho_R,u_R,v_R,p_R)
-
-        # find wavespeeds
-        C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
-        C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)
-        C = np.maximum( C_L, C_R )
-
-
-        # F = 0.5 (F_L+F_R) - 0.5 * C * (u_R-u_L)
-        flux_Mass   = 0.5 * (m_L+m_R) - C * 0.5 * (rho_L - rho_R)
-        flux_Momx   = 0.5 *(mu_L+mu_R) - C * 0.5 * (rho_L * u_L - rho_R * u_R)
-        flux_Momy   = 0.5 * (mv_L+mv_R)- C * 0.5 * (rho_L * v_L - rho_R * v_R)
-        flux_Energy = 0.5 * (e_L+e_R) - C * 0.5 * ( e_L - e_R )
-
-        return flux_Mass, flux_Momx, flux_Momy, flux_Energy
-
-    
-    def calcFlux(self, gamma):
-        [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
-         [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
-
+            
+    def calcFlux(self, rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R ):
+        gamma = atm.gamma
         if (p_L*p_R)<0:
             raise Exception("negative pressure")
         # left and right energies
@@ -189,7 +187,7 @@ class Face:
         C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
         C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)
         C = np.maximum( C_L, C_R )
-        plt.text(self.center.X, self.center.Y-atm.linespacing*1, f'WaveSpeed:{np.round(C, decimals=2)}')
+        # plt.text(self.center.X, self.center.Y-atm.linespacing*1, f'WaveSpeed:{np.round(C, decimals=2)}')
         
         # add stabilizing diffusive term
         flux_Mass   -= C * 0.5 * (rho_L - rho_R)
@@ -201,6 +199,31 @@ class Face:
 
     def display_normals(self):
         display_vector(self.center.getVec(), self.n, color='k')
+
+    
+    def calcFlux2(self, gamma):
+        [rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R]= \
+            [self.rho_L, self.rho_R, self.u_L, self.u_R, self.v_R, self.v_L, self.p_L, self.p_R]
+
+        m_L, mu_L, mv_L, e_L = getConserved(rho_L,u_L,v_L,p_L)
+        m_R, mu_R, mv_R, e_R = getConserved(rho_R,u_R,v_R,p_R)
+
+        # find wavespeeds
+        C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
+        C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)
+        C = np.maximum( C_L, C_R )
+
+
+        # F = 0.5 (F_L+F_R) - 0.5 * C * (u_R-u_L)
+        flux_Mass   = 0.5 * (m_L+m_R) - C * 0.5 * (rho_L - rho_R)
+        flux_Momx   = 0.5 *(mu_L+mu_R) - C * 0.5 * (rho_L * u_L - rho_R * u_R)
+        flux_Momy   = 0.5 * (mv_L+mv_R)- C * 0.5 * (rho_L * v_L - rho_R * v_R)
+        flux_Energy = 0.5 * (e_L+e_R) - C * 0.5 * ( e_L - e_R )
+
+        return flux_Mass, flux_Momx, flux_Momy, flux_Energy
+
+    
+
 
     def __str__(self):
 

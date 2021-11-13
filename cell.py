@@ -252,17 +252,18 @@ class Cell:
         [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
 
         for [f,fn] in zip(self.faces, self.dis2faces):
-            rho_face = self.rho + rho_dx * fn[0] + rho_dy * fn[1]
-            u_face = self.u + u_dx * fn[0] + u_dy * fn[1]
-            v_face = self.v + v_dx * fn[0] + v_dy * fn[1]
-            p_face = self.p + p_dx * fn[0] + p_dy * fn[1]
-            if (rho_face)<0:
-                print(f"cell {self.number} -> negative density")
-                rho_face = 0
-            if (p_face)<0:
-                print(f"cell {self.number} -> negative pressure")
-                p_face = 0
-            f.get_primitive_value(rho_face, u_face, v_face, p_face)
+            rho_face_X = self.rho + rho_dx * fn[0] 
+            u_face_X = self.u + u_dx * fn[0] 
+            v_face_X = self.v + v_dx * fn[0] 
+            p_face_X = self.p + p_dx * fn[0] 
+
+            rho_face_Y = self.rho + rho_dy * fn[1]
+            u_face_Y = self.u + u_dy * fn[1]
+            v_face_Y = self.v + v_dy * fn[1]
+            p_face_Y = self.p  + p_dy * fn[1]
+
+            f.get_primitive_values(rho_face_X, u_face_X, v_face_X, p_face_X,
+                                    rho_face_Y, u_face_Y, v_face_Y, p_face_Y)
     
     def get_flux_and_apply(self, dt):
 
@@ -272,14 +273,23 @@ class Cell:
             substract the flux from this face 
                 (same direction -> outside -> negative by definition)
             '''
-            direction = np.dot(f.n,cnf)
-            direction = - direction/abs(direction) # 1 when flow in, -1 when flow out
+            #direction = np.dot(f.n,cnf)
+            #direction = - direction/abs(direction) # 1 when flow in, -1 when flow out
+            # direction = -1 # Try
+            
+            # X-Direction 
+            A_ref = np.abs(np.cos(f.theta))*f.surface
+            self.m -=  A_ref * f.flux_Mass_X *dt
+            self.mu -=  A_ref * f.flux_Momx_X * dt
+            self.mv -=  A_ref * f.flux_Momy_X * dt
+            self.e -=  A_ref * f.flux_Energy_X * dt
 
-            direction = -1 # Try
-            self.m += direction * f.surface * f.flux_Mass *dt
-            self.mu += direction * f.surface * f.flux_Momx * dt
-            self.mv += direction * f.surface * f.flux_Momy * dt
-            self.e += direction * f.surface * f.flux_Energy * dt
+            A_ref = np.abs(np.cos(f.theta))*f.surface
+            self.m -=  A_ref * f.flux_Mass_Y *dt
+            self.mu -=  A_ref * f.flux_Momx_Y * dt
+            self.mv -=  A_ref * f.flux_Momy_Y * dt
+            self.e -=  A_ref * f.flux_Energy_Y * dt
+
         
         # update primitive values
         self.calc_primitives()
