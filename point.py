@@ -46,8 +46,9 @@ class Point(object):
         return np.array([self.X, self.Y])
 
     def getVecBetween(self, other):
-        dx = self.X - other.X
-        dy = self.Y - other.Y
+        # Creating Vector from self to other 
+        dx = other.X - self.X
+        dy = other.Y - self.Y
         return np.array([dx, dy])
 
     def distance(self, other):

@@ -189,16 +189,18 @@ def main():
 	""" Finite Volume simulation """
 	
 	# Simulation parameters
-	N                      = 128 # resolution
+	N                      = 200 # resolution
 	boxsize                = 1.
 	gamma                  = 5/3 # ideal gas gamma
 	courant_fac            = 0.4
 	t                      = 0
-	tEnd                   = 2
+	tEnd                   = 2000
 	tOut                   = 0.02 # draw frequency
 	useSlopeLimiting       = True
 	plotRealTime = True # switch on for plotting as the simulation goes along
-	
+	show_rho = True
+
+
 	# Mesh
 	dx = boxsize / N
 	vol = dx**2
@@ -209,9 +211,24 @@ def main():
 	w0 = 0.1
 	sigma = 0.05/np.sqrt(2.)
 	rho = 1. + (np.abs(Y-0.5) < 0.25)
+
 	vx = -0.5 + (np.abs(Y-0.5)<0.25)
+	# print(vx)
 	vy =  w0*np.sin(4*np.pi*X) * ( np.exp(-(Y-0.25)**2/(2 * sigma**2)) + np.exp(-(Y-0.75)**2/(2*sigma**2)) )
+
 	P = 2.5 * np.ones(X.shape)
+
+	rho = np.true_divide(rho,rho)
+	vx = vx*0	
+	vy = vy*0
+	vx[51:60,51:60] = 0.5
+	vx[40:49,40:49] = -0.5
+
+	print(rho)
+	print(vx)
+	print(vy)
+	print(P)
+
 
 	# Get conserved variables
 	Mass, Momx, Momy, Energy = getConserved( rho, vx, vy, P, gamma, vol )
@@ -219,13 +236,14 @@ def main():
 	# prep figure
 	fig = plt.figure(figsize=(4,4), dpi=80)
 	outputCount = 1
+	manager = plt.get_current_fig_manager()
+	manager.full_screen_toggle()
 	
 	# Simulation Main Loop
 	while t < tEnd:
 		
 		# get Primitive variables
 		rho, vx, vy, P = getPrimitive( Mass, Momx, Momy, Energy, gamma, vol )
-		
 		# get time step (CFL) = dx / max signal speed
 		dt = courant_fac * np.min( dx / (np.sqrt( gamma*P/rho ) + np.sqrt(vx**2+vy**2)) )
 		plotThisTurn = False
@@ -273,17 +291,23 @@ def main():
 		
 		# plot in real time - color 1/2 particles blue, other half red
 		if (plotRealTime and plotThisTurn) or (t >= tEnd):
-			plt.cla()
-			# u_abs = np.sqrt(np.multiply(vx,vx)*np.multiply(vy,vy))
-			plt.imshow(rho.T)
+			plt.cla()#			
+
+			if show_rho:
+				plt.imshow(rho.T,cmap=plt.cm.BuPu_r)
+			else:
+				u_abs = np.sqrt(np.multiply(vx,vx)*np.multiply(vy,vy))
+				plt.imshow(u_abs)
 			# plt.clim(0.8, 2.2)
 			ax = plt.gca()
+
 			ax.invert_yaxis()
 			ax.get_xaxis().set_visible(False)
 			ax.get_yaxis().set_visible(False)	
 			ax.set_aspect('equal')	
-			plt.pause(0.0001)
+			plt.pause(0.01)
 			outputCount += 1
+			# print(t)
 			
 	
 	# Save figure

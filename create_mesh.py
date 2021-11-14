@@ -3,7 +3,9 @@ import numpy as np
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
 
-plt.rcParams.update({'font.size': 1})
+from global_proporties import *
+
+plt.rcParams.update({'font.size': atm.fontsize})
 from scipy.ndimage.interpolation import zoom
 
 from cell import *
@@ -109,9 +111,10 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
     for c in cells:
         c.create_faces()
         c.face_neighbor_check()
-        c.calc_all()
         for f in c.faces:
             faces_set.add(f)
+    for c in cells:
+        c.calc_all()
 
 
     if plot_cells:

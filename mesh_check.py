@@ -12,7 +12,7 @@ from convert import *
 from numerical_functions import *
 from global_proporties import *
 
-def text_values_in_cell(cell,gradients=False,primitives=True,fluxes=True):
+def text_values_in_cell(cell,gradients=False,primitives=False,fluxes=False):
     text_ofset = atm.linespacing
     if not(atm.printtextincells):
         fluxes =False
@@ -36,7 +36,7 @@ def text_values_in_cell(cell,gradients=False,primitives=True,fluxes=True):
         plt.text(cell.center.X, cell.center.Y-text_ofset*3, f'v_dx:{np.round(v_dx, decimals=2)}')
         plt.text(cell.center.X, cell.center.Y-text_ofset*4, f'p_dx:{np.round(p_dx, decimals=2)}')
         plt.text(cell.center.X, cell.center.Y-text_ofset*5, f'vol:{np.round(cell.volume, decimals=2)}')
-        plt.text(cell.center.X, cell.center.Y-text_ofset*6, f'vec_x:{np.round(cell.ns_neighbor[0][0], decimals=2)}')
+        # plt.text(cell.center.X, cell.center.Y-text_ofset*6, f'vec_x:{np.round(cell.ns_neighbor[0][0], decimals=2)}')
         
 
 def text_values_on_face(face, primitives=False, fluxes=False):
@@ -45,7 +45,7 @@ def text_values_on_face(face, primitives=False, fluxes=False):
     if not(atm.printtextincells):
         fluxes =False
         primitives = False
-    if fluxes:
+    if primitives:
         plt.text(face.center.X+tex_offset_x, face.center.Y+text_ofset*5, '- R -')
         plt.text(face.center.X-tex_offset_x, face.center.Y+text_ofset*5, '- L -')
 
@@ -71,11 +71,16 @@ def text_values_on_face(face, primitives=False, fluxes=False):
         plt.text(face.center.X+tex_offset_x, face.center.Y-text_ofset*2, f'u_R:{np.round(face.u_R_Y, decimals=2)}')
         plt.text(face.center.X+tex_offset_x, face.center.Y-text_ofset*3, f'v_R:{np.round(face.v_R_Y, decimals=2)}')
         plt.text(face.center.X+tex_offset_x, face.center.Y-text_ofset*4, f'p_R:{np.round(face.p_R_Y, decimals=2)}')
-    if primitives:
-        plt.text(face.center.X, face.center.Y+text_ofset*4, f'm:{np.round(face.flux_Mass_X, decimals=2)}')
-        plt.text(face.center.X, face.center.Y+text_ofset*3, f'mu:{np.round(face.flux_Momx_X, decimals=2)}')
-        plt.text(face.center.X, face.center.Y+text_ofset*2, f'mv:{np.round(face.flux_Momy_X, decimals=2)}')
-        plt.text(face.center.X, face.center.Y+text_ofset*1, f'e:{np.round(face.flux_Energy_X, decimals=2)}')
+    if fluxes:
+        plt.text(face.center.X, face.center.Y+text_ofset*4, f'm X:{np.round(face.flux_Mass_X, decimals=2)}')
+        plt.text(face.center.X, face.center.Y+text_ofset*3, f'mu X:{np.round(face.flux_Momx_X, decimals=2)}')
+        plt.text(face.center.X, face.center.Y+text_ofset*2, f'mv X:{np.round(face.flux_Momy_X, decimals=2)}')
+        plt.text(face.center.X, face.center.Y+text_ofset*1, f'e X:{np.round(face.flux_Energy_X, decimals=2)}')
+    
+        plt.text(face.center.X, face.center.Y-text_ofset*1, f'm Y:{np.round(face.flux_Mass_Y, decimals=2)}')
+        plt.text(face.center.X, face.center.Y-text_ofset*2, f'mu Y:{np.round(face.flux_Momx_Y, decimals=2)}')
+        plt.text(face.center.X, face.center.Y-text_ofset*3, f'mv Y:{np.round(face.flux_Momy_Y, decimals=2)}')
+        plt.text(face.center.X, face.center.Y-text_ofset*4, f'e Y:{np.round(face.flux_Energy_Y, decimals=2)}')
 
 
 def check_cells(cells):

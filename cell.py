@@ -16,6 +16,7 @@ class Cell:
         self.number = number
         self.neighbors = []
         self.faces = []
+        self.sides = []
 
         # geometry
         self.center = Point()
@@ -44,7 +45,6 @@ class Cell:
         self.rho, self.u, self.v, self.p = \
             getPrimitive(self.m, self.mu, self.mv, self.e, self.volume)
         
-
     def calc_all(self):
         if self.boundary_points == []:
             raise Exception('Fatal: No Boundary Points added')
@@ -53,11 +53,10 @@ class Cell:
         if self.faces == []:
             raise Exception('Fatal: No faces added')
     
-        self.calc_distances_neigbhors()
+        self.create_sides()
         self.calc_distances_faces()
         self.calc_volume()
         self.calc_non_ortho_angles()
-
 
     def set_boundary_points(self, list_of_points:Point):
         self.boundary_points = list_of_points
@@ -66,6 +65,16 @@ class Cell:
     def add_neighbor(self, new_neighbors):
         self.neighbors.append(new_neighbors)
     
+    def create_sides(self):
+        for f in self.faces:
+            n = f.get_neighbor(self)
+            if not(n == False):
+                # print(n.center)
+                d12 = self.center.getVecBetween(n.center)
+            else:
+                d12 = 0
+            self.sides.append([n,f,d12])
+
     def create_faces(self):
         # creating all faces out of boundary points
 
@@ -128,13 +137,6 @@ class Cell:
         self.volume = surface  
         self.longest_side = max([a,b,c])
 
-          
-    def calc_distances_neigbhors(self):
-        # Calculates distances to all neigbors of the cell
-        for n in self.neighbors:
-            self.ns_neighbor.append(-1*self.center.getVecBetween(n.center))
-
-
     def calc_distances_faces(self):
         # Calculates distances to all face centers of the cell
         i = 0
@@ -148,6 +150,110 @@ class Cell:
             if not(n == False): # neighbor = False, when no neighbor exists
                 d = self.center.getVecBetween(n.center)
                 self.non_orto_angles.append(angle_between(f.n,d))
+
+    def calc_gradients_upwind(self):
+       
+        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]=\
+            [0.,0.,0.,0.,0.,0.,0.,0.]
+
+        # X Direction Gradient 
+        if self.u > 0:
+            nefave = self.get_neighbor_X('L')
+            if nefave == []:
+                nefave = self.get_neighbor_X('R')
+        else:
+            nefave = self.get_neighbor_X('R')
+            if nefave == []:
+                nefave = self.get_neighbor_X('L')
+
+        Ages = 0
+        for i in nefave:
+            n = i[0]
+            Aref = i[1].surface
+            d12 = i[2]
+            Ages += Aref
+
+            rho_dx += Aref * (n.rho-self.rho)/d12[0]
+            u_dx += Aref * (n.u-self.u)/d12[0]
+            v_dx += Aref * (n.v-self.v)/d12[0]
+            p_dx += Aref * (n.p-self.p)/d12[0]
+            
+        rho_dx *= 1/Ages
+        u_dx *= 1/Ages
+        v_dx *= 1/Ages
+        p_dx *= 1/Ages
+
+
+        # Y Direction Gradient 
+        if self.v > 0:
+            nefave = self.get_neighbor_Y('D')
+            if nefave ==[]:
+                nefave = self.get_neighbor_Y('U')
+        else:
+            nefave = self.get_neighbor_Y('U')
+            if nefave ==[]:
+                nefave = self.get_neighbor_Y('D')
+
+        Ages = 0
+        for i in nefave:
+            n = i[0]
+            Aref = i[1].surface
+            d12 = i[2]
+            Ages += Aref
+
+            rho_dy += Aref * (n.rho-self.rho)/d12[1]
+            u_dy += Aref * (n.u-self.u)/d12[1]
+            v_dy += Aref * (n.v-self.v)/d12[1]
+            p_dy += Aref * (n.p-self.p)/d12[1]
+            
+        rho_dy *= 1/Ages
+        u_dy *= 1/Ages
+        v_dy *= 1/Ages
+        p_dy *= 1/Ages
+
+        self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
+
+    def get_neighbor_X(self, side):
+        '''
+        side    'R': right 'L': left
+        depending on the side chosen 
+        Funktion will return all sides: [[neighbor, face, ,d12],...]
+        to the left (negative x) or to the right (positive x)
+        '''
+
+        return_array = []
+        if side == 'R': # We want the RIGHT neighbor
+            for i in self.sides:
+                if not(i[0] == False): # Side has no neighbor
+                    if self.center.X < i[0].center.X:
+                        return_array.append(i)
+        else: # side == 'L' We want the LEFT neighbor
+            for i in self.sides:
+                if not(i[0] == False): # Side has no neighbor
+                    if self.center.X > i[0].center.X:
+                        return_array.append(i)
+        return return_array
+
+    def get_neighbor_Y(self, side):
+        '''
+        side    'U': up 'D': down
+        depending on the side chosen 
+        Funktion will return all sides: [[neighbor, face, ,d12],...]
+        to the top (positive y) or to the bottom (negative y)
+        '''
+        return_array = []
+        if side == 'U': # We want the neighbor ON TOP
+            for i in self.sides:
+                if not(i[0] == False): # Side has no neighbor
+                    if self.center.Y < i[0].center.Y:
+                        return_array.append(i)
+        elif side == 'D': # side == 'D'  # We want the neighbor ON THE BOTTOM
+            for i in self.sides:
+                if not(i[0] == False): # Side has no neighbor
+                    if self.center.Y > i[0].center.Y:
+                        return_array.append(i)            
+
+        return return_array
 
     def calc_gradients_weighted_sum(self):
         '''
@@ -217,13 +323,17 @@ class Cell:
 
         self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
 
-    def extrapol_in_time(self, dt, gamma = 5/3):
+    def extrapol_in_time(self, dt):
+        gamma = atm.gamma
         [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
-        rho_prime = self.rho - 0.5*dt * ( self.u * rho_dx + self.rho * u_dx + self.v * rho_dy + self.rho * v_dy)
-        u_prime  = self.u  - 0.5*dt * ( self.u * u_dx + self.v * u_dy + (1/self.rho) * p_dx )
-        v_prime  = self.v  - 0.5*dt * ( self.u * v_dx + self.v * v_dy + (1/self.rho) * p_dy )
-        p_prime   = self.p   - 0.5*dt * ( gamma*self.p * (u_dx + v_dy)  + self.u * p_dx + self.v * p_dy )
+        rho, u, v, p = self.rho, self.u, self.v, self.p
 
+        # extrapolate half-step in time
+        rho_prime = rho - 0.5*dt * ( u * rho_dx + rho * u_dx + v * rho_dy + rho * v_dy)
+        u_prime = u - 0.5*dt * ( u * u_dx + v * u_dy + (1/rho) * p_dx )
+        v_prime = v - 0.5*dt * ( u * v_dx + v * v_dy + (1/rho) * p_dy )
+        p_prime = p - 0.5*dt * ( gamma*p * (u_dx + v_dy)  + u * p_dx + v * p_dy )
+        
         self.rho = rho_prime
         self.u = u_prime
         self.v = v_prime
@@ -246,12 +356,12 @@ class Cell:
                 p_face = 0
             f.get_primitive_value(rho_face, u_face, v_face, p_face)
 
-
     def extrapol2faces(self):
 
         [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
 
-        for [f,fn] in zip(self.faces, self.dis2faces):
+        for f in self.faces:
+            fn = self.center.getVecBetween(f.center)
             rho_face_X = self.rho + rho_dx * fn[0] 
             u_face_X = self.u + u_dx * fn[0] 
             v_face_X = self.v + v_dx * fn[0] 
@@ -267,7 +377,7 @@ class Cell:
     
     def get_flux_and_apply(self, dt):
 
-        for f, cnf in zip(self.faces, self.dis2faces):
+        for f in self.faces:
             '''
             when normal ON face and normal TO face point in one directoin
             substract the flux from this face 
@@ -277,24 +387,42 @@ class Cell:
             #direction = - direction/abs(direction) # 1 when flow in, -1 when flow out
             # direction = -1 # Try
             
-            # X-Direction 
-            A_ref = np.cos(f.theta)*f.surface
-            self.m -=  A_ref * f.flux_Mass_X *dt
-            self.mu -=  A_ref * f.flux_Momx_X * dt
-            self.mv -=  A_ref * f.flux_Momy_X * dt
-            self.e -=  A_ref * f.flux_Energy_X * dt
+            A_ref_X = np.cos(f.theta)*f.surface
+            A_ref_Y = np.cos(f.theta)*f.surface
 
-            A_ref = np.cos(f.theta)*f.surface
-            self.m -=  A_ref * f.flux_Mass_Y *dt
-            self.mu -=  A_ref * f.flux_Momx_Y * dt
-            self.mv -=  A_ref * f.flux_Momy_Y * dt
-            self.e -=  A_ref * f.flux_Energy_Y * dt
+            if (f.flux_Mass_X*f.flux_Momx_X*f.flux_Momy_X*f.flux_Energy_X) == 0:
+                self.flux_Mass_X, \
+                self.flux_Momx_X, \
+                self.flux_Momy_X, \
+                self.flux_Energy_X = A_ref_X *  self.m, A_ref_X *self.mu, \
+                                A_ref_X *self.mv, A_ref_X *self.e
+
+            
+            if (f.flux_Mass_Y*f.flux_Momx_Y*f.flux_Momy_Y*f.flux_Energy_Y) == 0:
+                self.flux_Mass_Y, \
+                self.flux_Momx_Y, \
+                self.flux_Momy_Y, \
+                self.flux_Energy_Y = A_ref_Y * self.m, A_ref_Y* self.mu, \
+                    A_ref_Y * self.mv, A_ref_Y*  self.e
+
+
+            # X-Direction 
+            self.m -=  A_ref_X * f.flux_Mass_X *dt
+            self.mu -=  A_ref_X * f.flux_Momx_X * dt
+            self.mv -=  A_ref_X * f.flux_Momy_X * dt
+            self.e -=  A_ref_X * f.flux_Energy_X * dt
+            # Y-Direction
+            self.m -=  A_ref_Y * f.flux_Mass_Y *dt
+            self.mu -=  A_ref_Y * f.flux_Momx_Y * dt
+            self.mv -=  A_ref_Y * f.flux_Momy_Y * dt
+            self.e -=  A_ref_Y * f.flux_Energy_Y * dt
 
         
         # update primitive values
         self.calc_primitives()
 
     def __str__(self):
+
         list_neighbors = ''
         for n in self.neighbors:
             list_neighbors = list_neighbors + f';{n.number}\n'
@@ -302,6 +430,7 @@ class Cell:
                f"with the #Neighbors {list_neighbors}\n"+\
                f"#Faces: {[f for f in self.faces]}"+\
                f'\n________________________________________________________________________'
+
     def _str__(self):
         non_ortho = np.array(self.non_orto_angles)*180/np.pi
         return f'#Cell {self.number}, \n'+\

@@ -16,8 +16,8 @@ class Face:
         self.calc_center()
         self.surface = p1.distance(p2)
         self.n = [0, 0]
-        self.calc_surfacenormal()
         self.theta = 0 # angle to x axis
+        self.calc_surfacenormal() 
         
         # cells conected
         self.cells_connected = []
