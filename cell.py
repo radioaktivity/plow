@@ -53,10 +53,10 @@ class Cell:
         if self.faces == []:
             raise Exception('Fatal: No faces added')
     
-        self.create_sides()
         self.calc_distances_faces()
         self.calc_volume()
         self.calc_non_ortho_angles()
+        self.create_sides()
 
     def set_boundary_points(self, list_of_points:Point):
         self.boundary_points = list_of_points
@@ -89,7 +89,17 @@ class Cell:
                 # Tell the newly created faces, that this cell (self) is connected to it
                 f.on_cell(self)
         else: 
-            raise Exception("Rectangular cells not yet permitted")
+            p1 = self.boundary_points[0]
+            p2 = self.boundary_points[1]
+            p3 = self.boundary_points[2]
+            p4 = self.boundary_points[3]
+            self.faces.append(Face(p1,p2))
+            self.faces.append(Face(p2,p4))
+            self.faces.append(Face(p4,p3))
+            self.faces.append(Face(p3,p1))
+            for f in self.faces:
+                # Tell the newly created faces, that this cell (self) is connected to it
+                f.on_cell(self)
 
     def face_neighbor_check(self):
         '''

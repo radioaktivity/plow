@@ -117,6 +117,7 @@ def create_mesh(nx=4,ny=4,write_mesh=False, plot_cells=False):
         c.calc_all()
 
 
+
     if plot_cells:
         print("Plotting Cells")
         print("-"*50)

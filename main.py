@@ -54,13 +54,13 @@ def main():
     dt = 0.01
     nx = 3
     ny = 2
-    courant_fac = 0.04
+    courant_fac = 0.2
 
     # display parameters
     c1='blue' #blue
     c2='red' #green
     rho_scale = 1.23
-    color = False
+    color = True
 
     # Creating the mesh
     start = timeit.default_timer()
@@ -74,12 +74,10 @@ def main():
     possible_dts = []
     i=0
     for c in cells:
-        if c.number == 0:
-            c.m, c.mu, c.mv, c.e = getConserved(100, 5, 0, 100, c.volume)
-        elif c.number == 1:
-            c.m, c.mu, c.mv, c.e = getConserved(100, 0, 0, 100, c.volume)
+        if c.number in range(0,ny):
+            c.m, c.mu, c.mv, c.e = getConserved(1, 0.1, 0, 2.5, c.volume)
         else:
-            c.m, c.mu, c.mv, c.e = getConserved(100, 10, 0, 100, c.volume)
+            c.m, c.mu, c.mv, c.e = getConserved(1, 0, 0, 2.5, c.volume)
 
         c.calc_primitives()
 
@@ -127,10 +125,11 @@ def main():
         t += dt
 
         for c in cells:
-            print(f"cell number {c.number} has rho: {c.rho}")
+            print(f"cell number {c.number} has rho: {c.rho} has u: {c.u}")
             if color:
                 u_total = np.sqrt(c.u**2+c.v**2)
-                u_total_norm = u_total/100
+                u_total_norm = u_total/1
+                rho_total_norm = c.rho/rho_scale
                 color = colorFader(c1,c2,mix=u_total_norm)
                 plt.fill([c.boundary_points[0].X, c.boundary_points[1].X, c.boundary_points[2].X], 
                         [c.boundary_points[0].Y, c.boundary_points[1].Y, c.boundary_points[2].Y], color)
@@ -138,9 +137,10 @@ def main():
         
         file_name = 'mesh'+f'{i}'+'.pdf'
         plt.savefig(file_name)
-        subprocess.Popen(['xdg-open '+file_name], shell=True)
+        plt.show()
+        #subprocess.Popen(['xdg-open '+file_name], shell=True)
         i+=1
-        break
+        
         
 
 

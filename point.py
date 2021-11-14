@@ -13,6 +13,9 @@ class Point(object):
         if arg == ():
             self.X = None
             self.Y = None
+        elif type(arg) is list:
+            self.X = arg[0]
+            self.Y = arg[1]
         elif type(arg[0]) is np.ndarray:
             self.X = arg[0][0]
             self.Y = arg[0][1]

@@ -222,7 +222,9 @@ class Face:
 
         return flux_Mass, flux_Momx, flux_Momy, flux_Energy
 
-    
+    def plot_border(self):
+        plt.plot([self.boundary_points[0].X, self.boundary_points[1].X], 
+                [self.boundary_points[0].Y, self.boundary_points[1].Y], 'y')
 
 
     def __str__(self):

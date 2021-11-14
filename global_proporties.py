@@ -4,5 +4,5 @@ class atm:
     dimension_x = 10
     dimension_y = 10
     linespacing = 0.012 * dimension_y
-    printtextincells = True
+    printtextincells = False
     fontsize = 1
