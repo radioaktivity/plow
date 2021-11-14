@@ -5,6 +5,7 @@ import timeit
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import subprocess
+from mpl_toolkits.mplot3d import Axes3D
 
 
 # Import files
@@ -45,6 +46,17 @@ def tf(faces):
     for f in faces:
         text_values_on_face(f, primitives=True)
 
+def get_scatter_values(cells):
+    x_plot = []
+    y_plot = []
+    z_plot = []
+    for c in cells:
+
+        x_plot.append(c.center.X)
+        y_plot.append(c.center.Y)
+        z_plot.append(c.u)
+
+    return x_plot, y_plot, z_plot
 
 def main():
     
@@ -53,28 +65,27 @@ def main():
     t_end = 100
     dt = 0.01
     courant_fac = 0.2
-    n = 4
+    n = 5
 
     # display parameters
     c1='blue' #blue
     c2='red' #green
     rho_scale = 1.23
-    color = True
+    color = False
+    scatter = True
 
     # Creating the mesh
     start = timeit.default_timer()
-    [cells, points, faces] = create_mesh_rect(n=n, plot_cells=False)
+    [cells, points, faces] = create_mesh_rect(n=n, plot_cells=True)
     print(f"Total Cell count {len(cells)}")
     print(f"Mesh Runtime : {timeit.default_timer()-start}")
     # check_cells(cells)
-   
-       
 
     possible_dts = []
     i=0
     for c in cells:
-        if c.number in range(0,n):
-            c.m, c.mu, c.mv, c.e = getConserved(1, 0.1, 0.1, 2.5, c.volume)
+        if c.number in range(0,int((n-1)**2*0.5)):
+            c.m, c.mu, c.mv, c.e = getConserved(1, 0.1, 0.0, 2.5, c.volume)
         else:
             c.m, c.mu, c.mv, c.e = getConserved(1, 0, 0, 2.5, c.volume)
 
@@ -84,10 +95,19 @@ def main():
         i+=1
     dt = min(possible_dts)
     print(f"*** Starting timestep dt: {dt}")
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
 
     i = 0
     while t<t_end:
-
+        
+        x_plot,y_plot,z_plot = get_scatter_values(cells)
+        plt.cla()
+        ax.scatter(x_plot,y_plot,z_plot)
+        ax = plt.gca()
+        plt.pause(1)
 
         for c in cells:
             # calculate gradients
@@ -96,6 +116,11 @@ def main():
         for c in cells:
             c.extrapol_in_time(dt)
         
+        x_plot,y_plot,z_plot = get_scatter_values(cells)
+        plt.cla()
+        ax.scatter(x_plot,y_plot,z_plot)
+        ax = plt.gca()
+        plt.pause(1)
 
         for c in cells:
             c.extrapol2faces()
@@ -123,25 +148,38 @@ def main():
         # update time
         t += dt
 
+        
+
         for c in cells:
-            print(f"cell number {c.number} has rho: {c.rho} has u: {c.u}")
+            # print(f"cell number {c.number} has rho: {c.rho} has u: {c.u}")
+
             if color:
                 u_total = np.sqrt(c.u**2+c.v**2)
-                u_total_norm = u_total/1
+                u_total_norm = u_total/0.2
                 rho_total_norm = c.rho/rho_scale
                 color = colorFader(c1,c2,mix=u_total_norm)
                 plt.fill([c.boundary_points[0].X, c.boundary_points[1].X,
                         c.boundary_points[3].X,c.boundary_points[2].X, ], 
                         [c.boundary_points[0].Y, c.boundary_points[1].Y, 
                         c.boundary_points[3].Y, c.boundary_points[2].Y], color)
+
         
-        
-        file_name = 'mesh'+f'{i}'+'.pdf'
-        plt.savefig(file_name)
+        # file_name = 'mesh'+f'{i}'+'.pdf'
+        # plt.savefig(file_name)
+
         #plt.show()
-        subprocess.Popen(['xdg-open '+file_name], shell=True)
+        #ubprocess.Popen(['xdg-open '+file_name], shell=True)
         i+=1
-        break
+        
+        x_plot,y_plot,z_plot = get_scatter_values(cells)
+        plt.cla()
+        ax.scatter(x_plot,y_plot,z_plot)
+        ax = plt.gca()
+        plt.pause(1)
+        
+    
+    plt.show()
+        
         
 
 

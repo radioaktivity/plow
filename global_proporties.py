@@ -3,6 +3,6 @@ class atm:
     
     dimension_x = 100
     dimension_y = 50
-    linespacing = 0.012 * dimension_y
-    printtextincells = True
+    linespacing = 0.010 * dimension_y
+    printtextincells = False
     fontsize = 1

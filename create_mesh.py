@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 from global_proporties import *
 
-plt.rcParams.update({'font.size': atm.fontsize})
 from scipy.ndimage.interpolation import zoom
 
 from cell import *

@@ -41,7 +41,7 @@ def text_values_in_cell(cell,gradients=False,primitives=False,fluxes=False):
 
 def text_values_on_face(face, primitives=False, fluxes=False):
     text_ofset = atm.linespacing
-    tex_offset_x = 0
+    tex_offset_x = atm.linespacing*2
     if not(atm.printtextincells):
         fluxes =False
         primitives = False

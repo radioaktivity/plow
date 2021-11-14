@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 from global_proporties import *
 
-plt.rcParams.update({'font.size': 10})
-from scipy.ndimage.interpolation import zoom
+#plt.rcParams.update({'font.size': 50})
+# from scipy.ndimage.interpolation import zoom
 
 from cell_new import *
 from point import *
@@ -94,8 +94,11 @@ def create_mesh_rect(n=8, plot_cells=False):
         #print("# Cell: ",c.number)
         #print('neighbors: ', c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
         #print('Voluume: ',c.volume)
+
+    
     
     if plot_cells:
+        fig = plt.figure()
         plt.plot(points[:,0], points[:,1], 'o')
         for j, p in enumerate(points):
 
@@ -109,9 +112,11 @@ def create_mesh_rect(n=8, plot_cells=False):
             plt.text(f.center.X, f.center.Y, '#%d' % i, ha='center') # label triangles
             #print(c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
             f.plot_border()
-        
+
+            
 
     return [cells, points_obj, faces_set]
 
 if __name__ == "__main__":
-    create_mesh_rect()
+    create_mesh_rect(plot_cells=True)
+    plt.show()
