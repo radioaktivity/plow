@@ -6,7 +6,7 @@ from global_proporties import *
 from vector_alg import *
 
 class Face:
-    def __init__(self, p1:Point, p2:Point):
+    def __init__(self, p1:Point, p2:Point, type='X'):
         if p1 is p2:
             raise Exception("Face generation with 2 equal points")
 
@@ -18,24 +18,19 @@ class Face:
         self.n = [0, 0]
         self.theta = 0 # angle to x axis
         self.calc_surfacenormal() 
+        self.faceType = type
         
         # cells conected
         self.cells_connected = []
 
         # primitive values
-        [self.rho_L_X, self.rho_R_X, self.u_L_X, self.u_R_X, self.v_R_X, self.v_L_X, self.p_L_X, self.p_R_X]=\
-            [0.,0.,0.,0.,0.,0.,0.,0.]
-        [self.rho_L_Y, self.rho_R_Y, self.u_L_Y, self.u_R_Y, self.v_R_Y, self.v_L_Y, self.p_L_Y, self.p_R_Y]=\
+        [self.rho_L , self.rho_R , self.u_L , self.u_R , self.v_R , self.v_L , self.p_L , self.p_R ]=\
             [0.,0.,0.,0.,0.,0.,0.,0.]
         
-        self.flux_Mass_X  = 0
-        self.flux_Momx_X   = 0
-        self.flux_Momy_X   = 0
-        self.flux_Energy_X = 0
-        self.flux_Mass_Y  = 0
-        self.flux_Momx_Y   = 0
-        self.flux_Momy_Y   = 0
-        self.flux_Energy_Y = 0
+        self.flux_Mass   = 0
+        self.flux_Momx    = 0
+        self.flux_Momy    = 0
+        self.flux_Energy  = 0
 
         # logic switches
         # When 1. cell hands his values to this face:
@@ -112,47 +107,47 @@ class Face:
         else:
             return False
     
-    def get_primitive_values(self, rho_face_X, u_face_X, v_face_X, p_face_X,
-                                    rho_face_Y, u_face_Y, v_face_Y, p_face_Y):
+    def get_primitive_values(self, rho, u, v, p):
         # takes primitive values from one cell 
         # assigns primitive values to L 
         # if L is already full assigns to R
 
         if not(self.isL):
-            self.rho_L_X, self.rho_L_Y = rho_face_X, rho_face_Y
-            self.u_L_X, self.u_L_Y = u_face_X, u_face_Y
-            self.v_L_X, self.v_L_Y = v_face_X, v_face_Y
-            self.p_L_X, self.p_L_Y = p_face_X, p_face_Y
+            self.rho_L = rho
+            self.u_L = u
+            self.v_L = v
+            self.p_L = p
 
             self.isL = True
         else:
-            self.rho_R_X, self.rho_R_Y = rho_face_X, rho_face_Y
-            self.u_R_X, self.u_R_Y = u_face_X, u_face_Y
-            self.v_R_X, self.v_R_Y = v_face_X, v_face_Y
-            self.p_R_X, self.p_R_Y = p_face_X, p_face_Y
+            self.rho_R = rho
+            self.u_R = u
+            self.v_R = v
+            self.p_R = p
 
             self.isR = True
 
     def getFlux(self, gamma = 5/3):
         if self.isR: # is inner face
-            self.flux_Mass_X, \
-                self.flux_Momx_X, \
-                self.flux_Momy_X, \
-                self.flux_Energy_X = \
-                    self.calcFlux(self.rho_L_X, self.rho_R_X, 
-                                self.u_L_X, self.u_R_X, 
-                                self.v_L_X, self.v_R_X, 
-                                self.p_L_X, self.p_R_X)
-
-            # notice here momy and momx changed place as well as v_L_Y,v_R_Y and u_L_Y,u_R_Y 
-            self.flux_Mass_Y, \
-                self.flux_Momy_Y, \
-                self.flux_Momx_Y, \
-                self.flux_Energy_Y = \
-                    self.calcFlux(self.rho_L_Y, self.rho_R_Y,
-                                  self.v_L_Y, self.v_R_Y,
-                                  self.u_L_Y, self.u_R_Y, 
-                                  self.p_L_Y, self.p_R_Y)
+            if (self.faceType == 'X'):
+                self.flux_Mass, \
+                    self.flux_Momx, \
+                    self.flux_Momy, \
+                    self.flux_Energy = \
+                        self.calcFlux(self.rho_L, self.rho_R, 
+                                    self.u_L, self.u_R, 
+                                    self.v_L, self.v_R, 
+                                    self.p_L, self.p_R)
+            else:
+                # notice here momy and momx changed place as well as v_L_Y,v_R_Y and u_L_Y,u_R_Y 
+                self.flux_Mass, \
+                    self.flux_Momy, \
+                    self.flux_Momx, \
+                    self.flux_Energy = \
+                        self.calcFlux(self.rho_L, self.rho_R,
+                                    self.v_L, self.v_R,
+                                    self.u_L, self.u_R, 
+                                    self.p_L, self.p_R)
 
             self.isR = False
             self.isL = False # Reset the state so next iteration overwrites 

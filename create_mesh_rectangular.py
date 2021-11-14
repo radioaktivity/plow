@@ -8,23 +8,18 @@ from global_proporties import *
 plt.rcParams.update({'font.size': 10})
 from scipy.ndimage.interpolation import zoom
 
-from cell import *
+from cell_new import *
 from point import *
-from face import *
+from face_new import *
 
 
-def create_mesh(nx=4,ny=4,plot_cells=False):
+def create_mesh_rect(n=8, plot_cells=False):
 
     # Dimensions of flowfield [m]
     dimension_x = atm.dimension_x
     dimension_y = atm.dimension_y
 
-    # Create point map as well as delaunay triangles
-
-    x = np.linspace(0,dimension_x,nx)
-    y = np.linspace(0,dimension_y,ny)
-
-    n = 8
+    # Create point map and point array
     x = np.linspace(0,100,n)
     y = np.linspace(0,100,n)
     X, Y = np.meshgrid(x,y)
@@ -57,13 +52,17 @@ def create_mesh(nx=4,ny=4,plot_cells=False):
     if True:
         n = n-1
         for i, c in enumerate(cells):
-            print('_'*50)
-            print(c.number)
+            
+            
+            # NOTE: Neighbors are sorted always in order LET RIGHT TOP BOTTOM
+
+            # Add left neighbor
             if (i%(n))==0: # left border
                 c.add_neighbor(cells[i+n-1])
             else:
                 c.add_neighbor(cells[i-1])
 
+            # Add right neighbor
             if ((i+1)%n == 0):
                 c.add_neighbor(cells[i-(n-1)])
             else:
@@ -82,33 +81,37 @@ def create_mesh(nx=4,ny=4,plot_cells=False):
             except:
                 c.add_neighbor(cells[i+((n-1)*n)])
 
-            print(c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
-   
 
     faces_set = set()
     for c in cells:
         c.create_faces()
+    for c in cells:
         c.face_neighbor_check()
         for f in c.faces:
             faces_set.add(f)
+        c.calc_all()
+        #print('_'*50)
+        #print("# Cell: ",c.number)
+        #print('neighbors: ', c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
+        #print('Voluume: ',c.volume)
     
+    if plot_cells:
+        plt.plot(points[:,0], points[:,1], 'o')
+        for j, p in enumerate(points):
 
-    plt.plot(points[:,0], points[:,1], 'o')
-    for j, p in enumerate(points):
+            plt.text(p[0], p[1], j, ha='right') # label the points
 
-        plt.text(p[0], p[1], j, ha='right') # label the points
+        for c in cells:
+            plt.text(c.center.X, c.center.Y, '#%d' % c.number, ha='center') # label triangles
 
-    for c in cells:
-        plt.text(c.center.X, c.center.Y, '#%d' % c.number, ha='center') # label triangles
+        for i,f in enumerate(faces_set):
 
-    for i,f in enumerate(faces_set):
-
-        plt.text(f.center.X, f.center.Y, '#%d' % i, ha='center') # label triangles
-        #print(c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
-        f.plot_border()
-    plt.show()
+            plt.text(f.center.X, f.center.Y, '#%d' % i, ha='center') # label triangles
+            #print(c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
+            f.plot_border()
+        
 
     return [cells, points_obj, faces_set]
 
 if __name__ == "__main__":
-    create_mesh()
+    create_mesh_rect()
