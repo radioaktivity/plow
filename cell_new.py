@@ -301,9 +301,9 @@ class Cell:
 
         for i, f in enumerate(self.faces):
             if i in (1,3):
-                sign = -1
-            else:
                 sign = 1
+            else:
+                sign = -1
 
             self.m -=  sign* f.surface * f.flux_Mass *dt
             self.mu -=  sign* f.surface * f.flux_Momx * dt

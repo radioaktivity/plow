@@ -64,8 +64,8 @@ def main():
     t = 0
     t_end = 100
     dt = 0.01
-    courant_fac = 0.2
-    n = 5
+    courant_fac = 0.05
+    n = 10
 
     # display parameters
     c1='blue' #blue
@@ -76,7 +76,7 @@ def main():
 
     # Creating the mesh
     start = timeit.default_timer()
-    [cells, points, faces] = create_mesh_rect(n=n, plot_cells=True)
+    [cells, points, faces] = create_mesh_rect(n=n, plot_cells=False)
     print(f"Total Cell count {len(cells)}")
     print(f"Mesh Runtime : {timeit.default_timer()-start}")
     # check_cells(cells)
@@ -103,11 +103,6 @@ def main():
     i = 0
     while t<t_end:
         
-        x_plot,y_plot,z_plot = get_scatter_values(cells)
-        plt.cla()
-        ax.scatter(x_plot,y_plot,z_plot)
-        ax = plt.gca()
-        plt.pause(1)
 
         for c in cells:
             # calculate gradients
