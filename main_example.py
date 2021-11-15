@@ -189,14 +189,14 @@ def main():
 	""" Finite Volume simulation """
 	
 	# Simulation parameters
-	N                      = 200 # resolution
+	N                      = 100 # resolution
 	boxsize                = 1.
 	gamma                  = 5/3 # ideal gas gamma
-	courant_fac            = 0.4
+	courant_fac            = 0.5
 	t                      = 0
 	tEnd                   = 2000
 	tOut                   = 0.02 # draw frequency
-	useSlopeLimiting       = True
+	useSlopeLimiting       = False
 	plotRealTime = True # switch on for plotting as the simulation goes along
 	show_rho = True
 
@@ -221,13 +221,7 @@ def main():
 	rho = np.true_divide(rho,rho)
 	vx = vx*0	
 	vy = vy*0
-	vx[51:60,51:60] = 0.5
-	vx[40:49,40:49] = -0.5
-
-	print(rho)
-	print(vx)
-	print(vy)
-	print(P)
+	vx[int(N/2), int(N/2)] = 0.1
 
 
 	# Get conserved variables
@@ -236,8 +230,8 @@ def main():
 	# prep figure
 	fig = plt.figure(figsize=(4,4), dpi=80)
 	outputCount = 1
-	manager = plt.get_current_fig_manager()
-	manager.full_screen_toggle()
+	# manager = plt.get_current_fig_manager()
+	# manager.full_screen_toggle()
 	
 	# Simulation Main Loop
 	while t < tEnd:

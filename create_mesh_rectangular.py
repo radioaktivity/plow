@@ -31,6 +31,7 @@ def create_mesh_rect(n=8, plot_cells=False):
         points_obj.append(Point(p))
 
 
+    faces_set = set()
     number_of_cells = (n-1)**2
     cells = []
     j=-1
@@ -49,42 +50,44 @@ def create_mesh_rect(n=8, plot_cells=False):
 
         cells.append(c)
 
+        c.create_faces()
+
     if True:
         n = n-1
         for i, c in enumerate(cells):
-            
-            
-            # NOTE: Neighbors are sorted always in order LET RIGHT TOP BOTTOM
+            # NOTE: Neighbors are sorted always in order LEFT RIGHT TOP BOTTOM
 
             # Add left neighbor
             if (i%(n))==0: # left border
                 c.add_neighbor(cells[i+n-1])
+                c.faces[0].wormhole_face = cells[i+n-1].faces[1]
             else:
                 c.add_neighbor(cells[i-1])
-
+                
             # Add right neighbor
             if ((i+1)%n == 0):
                 c.add_neighbor(cells[i-(n-1)])
+                c.faces[1].wormhole_face = cells[i-(n-1)].faces[0]
             else:
                 c.add_neighbor(cells[i+1])
-
 
             # Add top neighbor
             try:
                 c.add_neighbor(cells[i+n])
             except:
                 c.add_neighbor(cells[i-((n-1)*n)])
+                c.faces[2].wormhole_face = cells[i-((n-1)*n)].faces[3]
             
-            # Add bottom neighbor
-            try:
-                c.add_neighbor(cells[i-n])
-            except:
+
+            c.add_neighbor(cells[i-n])
+            if (i-n)<0:
+                c.faces[3].wormhole_face = cells[i-n].faces[2]
+
+            if False:
                 c.add_neighbor(cells[i+((n-1)*n)])
+                c.faces[3].wormhole_face = cells[i+((n-1)*n)].faces[2]
 
-
-    faces_set = set()
-    for c in cells:
-        c.create_faces()
+    i = 0
     for c in cells:
         c.face_neighbor_check()
         for f in c.faces:
@@ -95,7 +98,9 @@ def create_mesh_rect(n=8, plot_cells=False):
         #print('neighbors: ', c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
         #print('Voluume: ',c.volume)
 
-    
+    for f in faces_set:
+        f.number = i
+        i += 1
     
     if plot_cells:
         fig = plt.figure()
@@ -109,7 +114,7 @@ def create_mesh_rect(n=8, plot_cells=False):
 
         for i,f in enumerate(faces_set):
 
-            plt.text(f.center.X, f.center.Y, '#%d' % i, ha='center') # label triangles
+            plt.text(f.center.X, f.center.Y, '#%d' % f.number, ha='center') # label triangles
             #print(c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
             f.plot_border()
 
@@ -118,5 +123,22 @@ def create_mesh_rect(n=8, plot_cells=False):
     return [cells, points_obj, faces_set]
 
 if __name__ == "__main__":
-    create_mesh_rect(plot_cells=True)
+    cells, points_obj, faces_set = create_mesh_rect(n=6,plot_cells=True)
+    
+    for c in cells: 
+        print('_'*50)
+        print('Cell number: ', c.number)
+        print('Neighbors ', [n.number for n in c.neighbors])
+        print('Faces ',[f.number for f in c.faces])
+
+
+    for f in faces_set:
+        print('_'*50)
+        print('Face number: ', f.number)
+        try:
+            print('wormhole Face: ', f.wormhole_face.number)
+        except:
+            print('wormhole Face: ', f.wormhole_face)
+        print('cells connected: ', [c.number for c in f.cells_connected])
+
     plt.show()

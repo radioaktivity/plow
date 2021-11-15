@@ -134,6 +134,7 @@ class Face:
             self.isR = True
 
     def getFlux(self, gamma = 5/3):
+
         if self.isR: # is inner face
             self.flux_Mass_X, \
                 self.flux_Momx_X, \

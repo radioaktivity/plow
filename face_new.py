@@ -9,6 +9,9 @@ class Face:
     def __init__(self, p1:Point, p2:Point, type='X'):
         if p1 is p2:
             raise Exception("Face generation with 2 equal points")
+        
+        # organisation
+        self.number = 0
 
         # geometry
         self.center = Point()
@@ -19,9 +22,10 @@ class Face:
         self.theta = 0 # angle to x axis
         self.calc_surfacenormal() 
         self.faceType = type
+        self.wormhole_face = None
         
         # cells conected
-        self.cells_connected = []
+        self.cells_connected = set()
 
         # primitive values
         [self.rho_L , self.rho_R , self.u_L , self.u_R , self.v_R , self.v_L , self.p_L , self.p_R ]=\
@@ -44,26 +48,7 @@ class Face:
     def on_cell(self, cell):
         # adds a cell to the cells_connected array to later know
         # which cells this face is concading
-        self.cells_connected.append(cell)
-    
-    def get_neighbor(self, cell):
-        '''
-        returns the neighbor cell
-
-        self.cells_connected contains two cells
-        the cell that sends the demand 
-        and the cell which is on the other side 
-        of the face
-
-        the cell which sends the demand wants the cell object on the other side returned
-        '''
-        if self.cells_connected[0] == cell:
-            if len(self.cells_connected) == 2:
-                return self.cells_connected[1]
-            else:
-                return False # no neighbor
-        else:
-            return self.cells_connected[0]
+        self.cells_connected.add(cell)
 
     def calc_surfacenormal(self):
         # Calculate a vector normal to the face 
@@ -119,6 +104,7 @@ class Face:
             self.p_L = p
 
             self.isL = True
+
         else:
             self.rho_R = rho
             self.u_R = u
@@ -127,7 +113,7 @@ class Face:
 
             self.isR = True
 
-    def getFlux(self, gamma = 5/3):
+    def getFlux(self):
         if self.isR: # is inner face
             if (self.faceType == 'X'):
                 self.flux_Mass, \
@@ -152,9 +138,11 @@ class Face:
             self.isR = False
             self.isL = False # Reset the state so next iteration overwrites 
         else: # is boundary face
-            # Don't change anything
-            # Their standard value is 0
-            self.isL = False # Reset the state so next iteration overwrites 
+            # For boundary faces retry betFlux, but this time with the L-Values from the wormhole cell
+            self.isR = True
+            self.rho_R, self.u_R, self.v_R, self.p_R = \
+                self.wormhole_face.rho_L, self.wormhole_face.u_L, self.wormhole_face.v_L, self.wormhole_face.p_L
+            self.getFlux()
             
     def calcFlux(self, rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R ):
         gamma = atm.gamma

@@ -41,6 +41,7 @@ class Cell:
         self.e = 0
 
 
+
     def calc_primitives(self):
         self.rho, self.u, self.v, self.p = \
             getPrimitive(self.m, self.mu, self.mv, self.e, self.volume)
@@ -222,6 +223,38 @@ class Cell:
             
         self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
 
+    def calc_gradients_central(self):
+       
+        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]=\
+            [0.,0.,0.,0.,0.,0.,0.,0.]
+
+
+        n_L = self.neighbors[0] 
+
+        n_R = self.neighbors[1]
+
+        # top face length 
+        d = 2* self.faces[2].surface 
+
+        rho_dx += (n_R.rho-n_L.rho)/d
+        u_dx +=  (n_R.u-n_L.u)/d
+        v_dx +=  (n_R.v-n_L.v)/d
+        p_dx +=  (n_R.p-n_L.p)/d
+            
+
+
+        n_D = self.neighbors[3]
+        n_U = self.neighbors[2]
+
+        d = self.faces[0].surface * 2
+
+        rho_dy += (n_U.rho-n_D.rho)/d
+        u_dy +=  (n_U.u-n_D.u)/d
+        v_dy +=  (n_U.v-n_D.v)/d
+        p_dy += (n_U.p-n_D.p)/d
+            
+        self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
+
 
     def extrapol_in_time(self, dt):
         gamma = atm.gamma
@@ -242,7 +275,6 @@ class Cell:
     def extrapol2faces(self):
 
         [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
-
 
         #left right top bottom
         # x x y y 
@@ -301,9 +333,9 @@ class Cell:
 
         for i, f in enumerate(self.faces):
             if i in (1,3):
-                sign = 1
-            else:
                 sign = -1
+            else:
+                sign = 1
 
             self.m -=  sign* f.surface * f.flux_Mass *dt
             self.mu -=  sign* f.surface * f.flux_Momx * dt

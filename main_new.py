@@ -1,5 +1,5 @@
 # Import Libraries
-from numpy import array
+from numpy import array, true_divide
 import scipy.spatial as sp
 import timeit
 import matplotlib.pyplot as plt
@@ -58,25 +58,33 @@ def get_scatter_values(cells):
 
     return x_plot, y_plot, z_plot
 
+def scatter_quantity(ax, cells):
+    x_plot,y_plot,z_plot = get_scatter_values(cells)
+    plt.cla()
+    ax.scatter(x_plot,y_plot,z_plot)
+    ax = plt.gca()
+    plt.pause(0.1)
+
 def main():
     
     # numerical parameters
     t = 0
     t_end = 100
     dt = 0.01
-    courant_fac = 0.05
-    n = 10
+    courant_fac = 0.4
+    n = 50
 
     # display parameters
     c1='blue' #blue
     c2='red' #green
     rho_scale = 1.23
     color = False
-    scatter = True
+    scatter = False
+    image_paint = True
 
     # Creating the mesh
     start = timeit.default_timer()
-    [cells, points, faces] = create_mesh_rect(n=n, plot_cells=False)
+    [cells, points, faces] = create_mesh_rect(n=n, plot_cells=True)
     print(f"Total Cell count {len(cells)}")
     print(f"Mesh Runtime : {timeit.default_timer()-start}")
     # check_cells(cells)
@@ -84,21 +92,24 @@ def main():
     possible_dts = []
     i=0
     for c in cells:
-        if c.number in range(0,int((n-1)**2*0.5)):
-            c.m, c.mu, c.mv, c.e = getConserved(1, 0.1, 0.0, 2.5, c.volume)
+        if c.number == int(0.5*(n-1)**2):
+            c.m, c.mu, c.mv, c.e = getConserved(1.0, 0.01, 0.0, 2.5, c.volume)
         else:
-            c.m, c.mu, c.mv, c.e = getConserved(1, 0, 0, 2.5, c.volume)
+            c.m, c.mu, c.mv, c.e = getConserved(1.0, 0.0, 0.0, 2.5, c.volume)
 
         c.calc_primitives()
 
-        possible_dts.append(courant_fac * np.min( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
+        possible_dts.append(courant_fac * np.min( c.longest_side / \
+            (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
         i+=1
     dt = min(possible_dts)
     print(f"*** Starting timestep dt: {dt}")
-    fig = plt.figure()
-    ax = Axes3D(fig)
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
+
+    if scatter:
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
 
     i = 0
     while t<t_end:
@@ -106,22 +117,20 @@ def main():
 
         for c in cells:
             # calculate gradients
-            c.calc_gradients_upwind()
+            c.calc_gradients_central()
 
         for c in cells:
             c.extrapol_in_time(dt)
-        
-        x_plot,y_plot,z_plot = get_scatter_values(cells)
-        plt.cla()
-        ax.scatter(x_plot,y_plot,z_plot)
-        ax = plt.gca()
-        plt.pause(1)
+    
 
         for c in cells:
             c.extrapol2faces()
         tc(cells)
         tf(faces)
 
+        if scatter == True:
+            scatter_quantity(ax, cells)
+            
         # compute fluxes
 
         for f in faces:
@@ -144,11 +153,8 @@ def main():
         t += dt
 
         
-
-        for c in cells:
-            # print(f"cell number {c.number} has rho: {c.rho} has u: {c.u}")
-
-            if color:
+        if color:
+            for c in cells:
                 u_total = np.sqrt(c.u**2+c.v**2)
                 u_total_norm = u_total/0.2
                 rho_total_norm = c.rho/rho_scale
@@ -159,19 +165,30 @@ def main():
                         c.boundary_points[3].Y, c.boundary_points[2].Y], color)
 
         
+
+
+        if image_paint:
+            dim = n-1
+            A = np.zeros((dim,dim))
+            k = 0
+            for row in reversed(range(dim)):
+                for col in range(dim):
+                    u_total = np.sqrt(cells[k].u**2+cells[k].v**2)
+                    u_total_norm = u_total/0.2
+                    A[row,col] = u_total_norm
+                    k +=1
+            A = np.true_divide(A,0.2)
+        
+            plt.cla()
+            plt.imshow(A)
+            plt.pause(0.5)
+            
+
         # file_name = 'mesh'+f'{i}'+'.pdf'
         # plt.savefig(file_name)
 
-        #plt.show()
-        #ubprocess.Popen(['xdg-open '+file_name], shell=True)
+        #subprocess.Popen(['xdg-open '+file_name], shell=True)
         i+=1
-        
-        x_plot,y_plot,z_plot = get_scatter_values(cells)
-        plt.cla()
-        ax.scatter(x_plot,y_plot,z_plot)
-        ax = plt.gca()
-        plt.pause(1)
-        
     
     plt.show()
         

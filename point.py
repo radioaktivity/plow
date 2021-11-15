@@ -55,6 +55,7 @@ class Point(object):
         return np.array([dx, dy])
 
     def distance(self, other):
+        # Always Positive
         dx = self.X - other.X
         dy = self.Y - other.Y
         return math.sqrt(dx**2 + dy**2)
