@@ -54,7 +54,7 @@ def get_scatter_values(cells):
 
         x_plot.append(c.center.X)
         y_plot.append(c.center.Y)
-        z_plot.append(c.u)
+        z_plot.append(c.p)
 
     return x_plot, y_plot, z_plot
 
@@ -81,10 +81,12 @@ def main():
     color = False
     scatter = False
     image_paint = True
+    print_values = False
 
     # Creating the mesh
     start = timeit.default_timer()
-    [cells, points, faces] = create_mesh_rect(n=n, plot_cells=True)
+
+    [cells, points, faces] = create_mesh_rect(n=n, plot_cells=False)
     print(f"Total Cell count {len(cells)}")
     print(f"Mesh Runtime : {timeit.default_timer()-start}")
     # check_cells(cells)
@@ -99,10 +101,10 @@ def main():
 
         c.calc_primitives()
 
-        possible_dts.append(courant_fac * np.min( c.longest_side / \
+        possible_dts.append(np.min( c.longest_side / \
             (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
         i+=1
-    dt = min(possible_dts)
+    dt = min(possible_dts) * courant_fac
     print(f"*** Starting timestep dt: {dt}")
 
     if scatter:
@@ -113,7 +115,7 @@ def main():
 
     i = 0
     while t<t_end:
-        
+        #print('*****Time', t)
 
         for c in cells:
             # calculate gradients
@@ -121,14 +123,13 @@ def main():
 
         for c in cells:
             c.extrapol_in_time(dt)
-    
-
+            
         for c in cells:
             c.extrapol2faces()
         tc(cells)
         tf(faces)
 
-        if scatter == True:
+        if scatter:
             scatter_quantity(ax, cells)
             
         # compute fluxes
@@ -143,11 +144,23 @@ def main():
         for c in cells:
             c.get_flux_and_apply(dt)      
 
-        
+            if c.rho <= 0:
+                raise Exception('Negative Rho')
+            if c.p <= 0:
+                raise Exception('Negative P')
 
+        if print_values:
+            for ci, c in enumerate(cells):
+                if ci%1==0:
+                    print(f'Cell number {c.number} has u {c.u}')
+                    print(f'Cell number {c.number} has v {c.v}')
+                    print(f'Cell number {c.number} has u_dx {c.gradients}')
+
+
+        for c in cells:
         # Calculate new dt by the courant number in every cell and taking the smallest result
-            possible_dts.append(courant_fac * np.min( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
-        dt = min(possible_dts)
+            possible_dts.append(np.min( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
+        dt = min(possible_dts) * courant_fac
 
         # update time
         t += dt
@@ -175,13 +188,13 @@ def main():
                 for col in range(dim):
                     u_total = np.sqrt(cells[k].u**2+cells[k].v**2)
                     u_total_norm = u_total/0.2
-                    A[row,col] = u_total_norm
+                    A[row,col] = cells[k].p
                     k +=1
-            A = np.true_divide(A,0.2)
+            # A = np.true_divide(A,0.2)
         
             plt.cla()
             plt.imshow(A)
-            plt.pause(0.5)
+            plt.pause(0.01)
             
 
         # file_name = 'mesh'+f'{i}'+'.pdf'

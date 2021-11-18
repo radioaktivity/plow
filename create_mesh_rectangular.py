@@ -20,8 +20,8 @@ def create_mesh_rect(n=8, plot_cells=False):
     dimension_y = atm.dimension_y
 
     # Create point map and point array
-    x = np.linspace(0,100,n)
-    y = np.linspace(0,100,n)
+    x = np.linspace(0,dimension_x,n)
+    y = np.linspace(0,dimension_y,n)
     X, Y = np.meshgrid(x,y)
     points = np.vstack([X.ravel(), Y.ravel()]).T
 
@@ -103,7 +103,7 @@ def create_mesh_rect(n=8, plot_cells=False):
         i += 1
     
     if plot_cells:
-        fig = plt.figure()
+        
         plt.plot(points[:,0], points[:,1], 'o')
         for j, p in enumerate(points):
 
@@ -118,12 +118,12 @@ def create_mesh_rect(n=8, plot_cells=False):
             #print(c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
             f.plot_border()
 
-            
+    plt.show()
 
     return [cells, points_obj, faces_set]
 
 if __name__ == "__main__":
-    cells, points_obj, faces_set = create_mesh_rect(n=6,plot_cells=True)
+    cells, points_obj, faces_set = create_mesh_rect(n=5,plot_cells=True)
     
     for c in cells: 
         print('_'*50)

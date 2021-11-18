@@ -189,16 +189,16 @@ def main():
 	""" Finite Volume simulation """
 	
 	# Simulation parameters
-	N                      = 100 # resolution
+	N                      = 50 # resolution
 	boxsize                = 1.
 	gamma                  = 5/3 # ideal gas gamma
-	courant_fac            = 0.5
+	courant_fac            = 0.4
 	t                      = 0
 	tEnd                   = 2000
 	tOut                   = 0.02 # draw frequency
 	useSlopeLimiting       = False
 	plotRealTime = True # switch on for plotting as the simulation goes along
-	show_rho = True
+	show_rho = False
 
 
 	# Mesh
@@ -228,7 +228,7 @@ def main():
 	Mass, Momx, Momy, Energy = getConserved( rho, vx, vy, P, gamma, vol )
 	
 	# prep figure
-	fig = plt.figure(figsize=(4,4), dpi=80)
+	fig = plt.figure(figsize=(4,4), dpi=100)
 	outputCount = 1
 	# manager = plt.get_current_fig_manager()
 	# manager.full_screen_toggle()
@@ -285,21 +285,23 @@ def main():
 		
 		# plot in real time - color 1/2 particles blue, other half red
 		if (plotRealTime and plotThisTurn) or (t >= tEnd):
+			pass
+		if True:
 			plt.cla()#			
 
 			if show_rho:
 				plt.imshow(rho.T,cmap=plt.cm.BuPu_r)
 			else:
 				u_abs = np.sqrt(np.multiply(vx,vx)*np.multiply(vy,vy))
-				plt.imshow(u_abs)
+				plt.imshow(P)
 			# plt.clim(0.8, 2.2)
 			ax = plt.gca()
 
-			ax.invert_yaxis()
-			ax.get_xaxis().set_visible(False)
-			ax.get_yaxis().set_visible(False)	
+			#ax.invert_yaxis()
+			#ax.get_xaxis().set_visible(False)
+			#ax.get_yaxis().set_visible(False)	
 			ax.set_aspect('equal')	
-			plt.pause(0.01)
+			plt.pause(0.03)
 			outputCount += 1
 			# print(t)
 			

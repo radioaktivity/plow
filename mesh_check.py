@@ -64,7 +64,18 @@ def text_values_on_face(face, primitives=False, fluxes=False):
         plt.text(face.center.X, face.center.Y+text_ofset*3, f'mu X:{np.round(face.flux_Momx , decimals=2)}')
         plt.text(face.center.X, face.center.Y+text_ofset*2, f'mv X:{np.round(face.flux_Momy , decimals=2)}')
         plt.text(face.center.X, face.center.Y+text_ofset*1, f'e X:{np.round(face.flux_Energy , decimals=2)}')
-    
+
+
+def check_faces(faces):
+    number = []
+    b_R_L = False
+
+    for f in faces:
+        if not(f.isR and f.isL):
+            b_R_L = True
+            number.append(f.number)
+    if b_R_L:
+        raise Exception(f"Face {number} is missing Values")
 
 def check_cells(cells):
     print('-'*50)
