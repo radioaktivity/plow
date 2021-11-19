@@ -189,7 +189,7 @@ def main():
 	""" Finite Volume simulation """
 	
 	# Simulation parameters
-	N                      = 50 # resolution
+	N                      = 120 # resolution
 	boxsize                = 1.
 	gamma                  = 5/3 # ideal gas gamma
 	courant_fac            = 0.4
@@ -301,7 +301,7 @@ def main():
 			#ax.get_xaxis().set_visible(False)
 			#ax.get_yaxis().set_visible(False)	
 			ax.set_aspect('equal')	
-			plt.pause(0.03)
+			plt.pause(0.01)
 			outputCount += 1
 			# print(t)
 			
