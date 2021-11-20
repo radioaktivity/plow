@@ -3,6 +3,7 @@ from global_proporties import *
 from point import *
 from cell1d import *
 from face1d import *
+from convert1d import *
 
 def create_mesh(n=30):
     dim = 1

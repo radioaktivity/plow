@@ -159,7 +159,7 @@ def main():
 
         for c in cells:
         # Calculate new dt by the courant number in every cell and taking the smallest result
-            possible_dts.append(np.min( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
+            possible_dts.append(( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
         dt = min(possible_dts) * courant_fac
 
         # update time
