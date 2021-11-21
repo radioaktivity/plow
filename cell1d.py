@@ -55,15 +55,29 @@ class Cell:
         self.calc_volume()
         self.distance = self.volume # 1d case
 
-    def calc_gradients(self):
+    def calc_gradients(self, type='central'):
+        
+        if type == 'central':
+            d = 2* self.distance
+            n_L = self.neighbors[0]
+            n_R = self.neighbors[1]
 
-        d = 2* self.distance
-        n_L = self.neighbors[0]
-        n_R = self.neighbors[1]
+            self.rho_dx = (n_R.rho-n_L.rho)/d 
+            self.u_dx =  (n_R.u-n_L.u)/d
+            self.p_dx =  (n_R.p-n_L.p)/d
+        else:
+            d = self.distance
+            n_L = self.neighbors[0]
+            n_R = self.neighbors[1]
 
-        self.rho_dx = (n_R.rho-n_L.rho)/d 
-        self.u_dx =  (n_R.u-n_L.u)/d
-        self.p_dx =  (n_R.p-n_L.p)/d
+            if self.u >=0:
+                self.rho_dx = (self.rho-n_L.rho)/d 
+                self.u_dx =  (self.u-n_L.u)/d
+                self.p_dx =  (self.p-n_L.p)/d
+            else:
+                self.rho_dx = (self.rho-n_R.rho)/d 
+                self.u_dx =  (self.u-n_R.u)/d
+                self.p_dx =  (self.p-n_R.p)/d
 
     def extrapol_in_time(self, dt):
         # extrapolate half-step in time
@@ -92,10 +106,10 @@ class Cell:
         
         f_L = self.faces[0]
         f_R = self.faces[1]
-
-        self.Mass -= dt * f_L.flux_Mass - dt * f_R.flux_Mass
-        self.Momx -= dt * f_L.flux_Momx - dt * f_R.flux_Momx
-        self.Energy -= dt * f_L.flux_Energy - dt * f_R.flux_Energy
+        
+        self.Mass -= dt * (f_L.flux_Mass - f_R.flux_Mass) * self.volume 
+        self.Momx -= dt * (f_L.flux_Momx -f_R.flux_Momx) * self.volume 
+        self.Energy -= dt * (f_L.flux_Energy - f_R.flux_Energy) * self.volume 
 
         self.calc_primitives()
 

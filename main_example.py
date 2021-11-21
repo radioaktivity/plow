@@ -190,7 +190,7 @@ def main():
 	
 	# Simulation parameters
 	N                      = 120 # resolution
-	boxsize                = 1.
+	boxsize                = 100.
 	gamma                  = 5/3 # ideal gas gamma
 	courant_fac            = 0.4
 	t                      = 0
@@ -285,8 +285,8 @@ def main():
 		
 		# plot in real time - color 1/2 particles blue, other half red
 		if (plotRealTime and plotThisTurn) or (t >= tEnd):
-			pass
-		if True:
+			#pass
+		#if True:
 			plt.cla()#			
 
 			if show_rho:

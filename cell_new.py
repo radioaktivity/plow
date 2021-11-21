@@ -366,14 +366,14 @@ class Cell:
         # LEFT
         f = self.faces[0]
         fn = self.center.getVecBetween(f.center)
-        sign = 1
+        sign = -1
         flux_Mass, flux_Momx, flux_Momy, flux_Energy = f.give_FLuxes(side='L')
 
 
-        self.m +=  sign* f.surface * flux_Mass * dt
-        self.mu +=  sign* f.surface * flux_Momx * dt
-        self.mv += sign*  f.surface * flux_Momy * dt
-        self.e +=  sign* f.surface * flux_Energy * dt
+        self.m +=  sign* self.volume * flux_Mass * dt
+        self.mu +=  sign* self.volume * flux_Momx * dt
+        self.mv += sign*  self.volume * flux_Momy * dt
+        self.e +=  sign* self.volume * flux_Energy * dt
 
         # RIGHT
         f = self.faces[1]
@@ -381,10 +381,10 @@ class Cell:
         sign = 1
         flux_Mass, flux_Momx, flux_Momy, flux_Energy = f.give_FLuxes(side='R')
 
-        self.m +=  sign* f.surface * flux_Mass * dt
-        self.mu +=  sign* f.surface * flux_Momx * dt
-        self.mv += sign*  f.surface * flux_Momy * dt
-        self.e +=  sign* f.surface * flux_Energy * dt
+        self.m +=  sign* self.volume * flux_Mass * dt
+        self.mu +=  sign* self.volume * flux_Momx * dt
+        self.mv += sign*  self.volume * flux_Momy * dt
+        self.e +=  sign* self.volume * flux_Energy * dt
 
         
         # TOP
@@ -393,23 +393,23 @@ class Cell:
         sign = 1
         flux_Mass, flux_Momx, flux_Momy, flux_Energy = f.give_FLuxes(side='TOP')
 
-        self.m +=  sign* f.surface * flux_Mass *dt
-        self.mu +=  sign* f.surface * flux_Momx * dt
-        self.mv += sign*  f.surface * flux_Momy * dt
-        self.e +=  sign* f.surface * flux_Energy * dt
+        self.m +=  sign* self.volume * flux_Mass *dt
+        self.mu +=  sign* self.volume * flux_Momx * dt
+        self.mv += sign*  self.volume * flux_Momy * dt
+        self.e +=  sign* self.volume * flux_Energy * dt
 
  
         # BOTTOM
         f = self.faces[3]
         fn = self.center.getVecBetween(f.center)
-        sign = 1
+        sign = -1
         flux_Mass, flux_Momx, flux_Momy, flux_Energy = f.give_FLuxes(side='BOTTOM')
 
 
-        self.m +=  sign* f.surface * flux_Mass *dt
-        self.mu +=  sign* f.surface * flux_Momx * dt
-        self.mv += sign*  f.surface * flux_Momy * dt
-        self.e +=  sign* f.surface * flux_Energy * dt
+        self.m +=  sign* self.volume * flux_Mass *dt
+        self.mu +=  sign* self.volume * flux_Momx * dt
+        self.mv += sign*  self.volume * flux_Momy * dt
+        self.e +=  sign* self.volume * flux_Energy * dt
 
     
         # update primitive values

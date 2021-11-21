@@ -95,7 +95,7 @@ def main():
     i=0
     for c in cells:
         if c.number == int(0.5*(n-1)**2):
-            c.m, c.mu, c.mv, c.e = getConserved(1.0, 0.01, 0.0, 2.5, c.volume)
+            c.m, c.mu, c.mv, c.e = getConserved(1.0, 0.1, 0.0, 2.5, c.volume)
         else:
             c.m, c.mu, c.mv, c.e = getConserved(1.0, 0.0, 0.0, 2.5, c.volume)
 
