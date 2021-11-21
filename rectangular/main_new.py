@@ -12,7 +12,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from cell_new import *
 from create_mesh_rectangular import *
 from convert import *
-from numerical_functions import *
 from global_proporties import *
 from mesh_check import *
 from vector_alg import *
@@ -104,7 +103,7 @@ def main():
     t_end = 100
     courant_fac = 0.2
     n = 16
-    nth_turn = 5
+    nth_turn = 1
     pause = 0.1
     scatter = False
     image_paint = True
@@ -119,7 +118,7 @@ def main():
 
 
     # cells = exponential_boundary(cells, n)
-    cells = impulse_initial(cells, n, size=(0,0.1))
+    cells = impulse_initial(cells, n, size=(0.1,0))
 
     for i, c in enumerate(cells):
         c.calc_conserved()

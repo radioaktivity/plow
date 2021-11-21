@@ -195,10 +195,10 @@ def main():
 	courant_fac            = 0.4
 	t                      = 0
 	tEnd                   = 2000
-	tOut                   = 0.2 # draw frequency
-	useSlopeLimiting       = False
+	tOut                   = 0.002 # draw frequency
+	useSlopeLimiting       = True
 	plotRealTime = True # switch on for plotting as the simulation goes along
-	show_rho = False
+	show_rho = True
 
 
 	# Mesh
@@ -209,7 +209,7 @@ def main():
 	Y, X = np.meshgrid( xlin, ylin )
 	
 	# Generate Initial Conditions - opposite moving streams with perturbation
-	w0 = 0.1
+	w0 = 0.01
 	sigma = 0.05/np.sqrt(2.)
 	rho = 1. + (np.abs(Y-0.5) < 0.25)
 
@@ -217,13 +217,12 @@ def main():
 	# print(vx)
 	vy =  w0*np.sin(4*np.pi*X) * ( np.exp(-(Y-0.25)**2/(2 * sigma**2)) + np.exp(-(Y-0.75)**2/(2*sigma**2)) )
 
+
 	P = 2.5 * np.ones(X.shape)
-	if False:
-		P = 2.5 * np.ones(X.shape)
-		rho = np.true_divide(rho,rho)
-		vx = vx*0	
-		vy = vy*0
-		vx[int(N/2), int(N/2)] = 10
+	rho = np.true_divide(rho,rho)
+	vx = vx*0	
+	vy = vy*0
+	vx[:, int(N/2)] = 100 * np.ones(vx[:,1].shape)
 
 
 	# Get conserved variables
@@ -299,9 +298,9 @@ def main():
 			# plt.clim(0.8, 2.2)
 			ax = plt.gca()
 
-			#ax.invert_yaxis()
-			#ax.get_xaxis().set_visible(False)
-			#ax.get_yaxis().set_visible(False)	
+			ax.invert_yaxis()
+			ax.get_xaxis().set_visible(False)
+			ax.get_yaxis().set_visible(False)	
 			ax.set_aspect('equal')	
 			plt.pause(0.01)
 			outputCount += 1

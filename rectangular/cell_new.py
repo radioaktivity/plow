@@ -286,6 +286,7 @@ class Cell:
         # L R U D
         f_L = self.faces[0]
         f_R = self.faces[1]
+
         self.Mass -= dt * (f_L.flux_Mass - f_R.flux_Mass) * f_L.surface 
         self.Momx -= dt * (f_L.flux_Momx -f_R.flux_Momx) * f_L.surface 
         self.Momy -= dt * (f_L.flux_Momy -f_R.flux_Momy) * f_L.surface  

@@ -6,10 +6,7 @@ import scipy.spatial as sp
 import timeit
 import matplotlib.pyplot as plt
 
-from cell import *
-from create_mesh import *
 from convert import *
-from numerical_functions import *
 from global_proporties import *
 
 def text_values_in_cell(cell,gradients=False,primitives=False,fluxes=False):

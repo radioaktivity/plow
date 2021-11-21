@@ -1,6 +1,5 @@
 import numpy as np
 
-from face import *
 from point import *
 from convert1d import *
 import scipy.interpolate

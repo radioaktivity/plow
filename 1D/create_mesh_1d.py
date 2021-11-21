@@ -1,4 +1,4 @@
-from convert import *
+
 from global_proporties import *
 from point import *
 from cell1d import *
