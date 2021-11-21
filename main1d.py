@@ -38,70 +38,82 @@ def plot_pressure(cells, title=' ', pause=1, faces=None):
         plt.scatter(pos_F+np.ones(len(pos_F))*dim/5, u_R, label='u_R')
 
 
-    plt.legend()
+    plt.legend(loc='lower right')
     plt.title(title)
-    plt.ylim((-1,4))
+    plt.ylim((-1,6))
     plt.pause(pause)
 
 def impulse_initial(cells, n, size=0.3):
     for i, c in enumerate(cells):
         if i==int(n/2):
-            c.rho = 1
-            c.u = size
-            c.p = 2.5
+            c.rho += 1
+            c.u += size
+            c.p += 2.5
         else:
-            c.rho = 1
-            c.u = 0
-            c.p = 2.5
+            c.rho += 1
+            c.u += 0
+            c.p += 2.5
 
     return cells
 
 def step_intial(cells, n, size=0.1):
     for i, c in enumerate(cells):
         if (i<=(int(n/2)+int(n/6))) and (i>=(int(n/2)-int(n/6))):
-            c.rho = 1
-            c.u = 0
-            c.p = 2.5
+            c.rho += 1
+            c.u += 0
+            c.p += 2.5
         else:
-            c.rho = 1
-            c.u = size
-            c.p = 2.5
+            c.rho += 1
+            c.u += size
+            c.p += 2.5
 
     return cells
 
-def exponential_boundary(cells, n):
-    u0 =1 
+def step_intial_pressure(cells, n, size=0.1):
+    for i, c in enumerate(cells):
+        if (i<=(int(n/2)+int(n/6))) and (i>=(int(n/2)-int(n/6))):
+            c.rho += 1
+            c.u += 0
+            c.p += 3
+        else:
+            c.rho += 1
+            c.u += 0
+            c.p += 2.5
+
+    return cells
+
+def exponential_boundary(cells, n, size=0.4):
+    u0 =size
     for i, c in enumerate(cells):
         if i<int(n/2):
-            c.rho = 1
-            c.u = u0 * i/n
-            c.p = 2.5
+            c.rho += 1
+            c.u += u0 * i/n
+            c.p += 2.5
         else:
-            c.rho = 1
-            c.u = u0 * (1-i/n)
-            c.p = 2.5
+            c.rho += 1
+            c.u += u0 * (1-i/n)
+            c.p += 2.5
 
     return cells
 
 if __name__ == '__main__':
 
     t = 0
-    t_end = 10
+    t_end = 300
     dt = 0
     pause = 0.01
-    nth_plot = 100
-    courant_fac = 0.4
-    n = 50
+    nth_plot = 20
+    courant_fac = 0.2
+    n =400
 
     [cells, faces] = create_mesh(n=n)
 
     possible_dts = []
 
-    #cells = exponential_boundary(cells)
-    
-    # cells = exponential_boundary(cells, n)
-    cells = step_intial(cells, n, size=-1.5)
-    cells = impulse_initial(cells, n, size=3)
+    #cells = exponential_boundary(cells, n, size=0.3)
+    #cells = step_intial(cells, n, size=-1.5)
+    #cells = impulse_initial(cells, n, size=0.2)
+    cells = step_intial_pressure(cells,n)
     plot_pressure(cells)
 
 
@@ -135,9 +147,6 @@ if __name__ == '__main__':
         for c in cells:
             c.applyFlux(dt)
         
-
-    
-
         possible_dts = []
         for c in cells:
             # Calculate new dt by the courant number in every cell and taking the smallest result

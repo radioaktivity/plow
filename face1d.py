@@ -13,23 +13,32 @@ class Face1D:
         self.rho_L, self.u_L, self.p_L = None, None, None
         self.rho_R, self.u_R, self.p_R = None, None, None
 
+        self.isL = False
+        self.isR = False
+
     def getPrimitives(self, rho, u, p, side=None):
         # side: pov face so, when cell on the right side='R'
 
         if side == 'L':
             self.rho_L, self.u_L, self.p_L = rho, u, p
+            self.isL = True
         else:
             self.rho_R, self.u_R, self.p_R = rho, u, p
+            self.isR = True
 
     def calcFlux(self):
         w = self.wormhole_face
-        if self.rho_L == None:
+        if self.isL == False:
             self.rho_L, self.u_L, self.p_L = w.rho_L, w.u_L, w.p_L
-        if self.rho_R == None:
+        if self.isR == False:
             self.rho_R, self.u_R, self.p_R = w.rho_R, w.u_R, w.p_R
         
         self.flux_Mass, self.flux_Momx, self.flux_Energy = \
              self.getFlux(self.rho_L, self.rho_R, self.u_L, self.u_R, self.p_L, self.p_R)
+
+        self.isL = False
+        self.isR = False
+
 
     def getFlux(self, rho_L, rho_R, u_L, u_R, p_L, p_R):
         

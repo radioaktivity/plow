@@ -67,7 +67,6 @@ class Face:
         else:
             self.n = np.array([0,1])
 
-
     def calc_center(self):
         # Takes boundary poitns and sets center 
         boundary_points_ko =np.zeros([len(self.boundary_points),2])
@@ -100,7 +99,7 @@ class Face:
         else:
             return False
     
-    def get_primitive_values(self, rho, u, v, p, cellsent=''):
+    def get_primitive_values(self, rho, u, v, p, cellsent=None):
         # takes primitive values from one cell 
         # assigns primitive values to L 
         # if L is already full assigns to R
@@ -122,6 +121,21 @@ class Face:
             self.isR = True
 
     def getFlux(self):
+
+
+        if self.isR == False:
+            self.rho_R = self.wormhole_face.rho_R
+            self.u_R = self.wormhole_face.u_R
+            self.v_R = self.wormhole_face.v_R
+            self.p_R = self.wormhole_face.p_R
+            self.isR = True
+        elif self.isL == False:
+            self.rho_L = self.wormhole_face.rho_L
+            self.u_L = self.wormhole_face.u_L
+            self.v_L = self.wormhole_face.v_L
+            self.p_L = self.wormhole_face.p_L            
+            self.isL = True
+
         if (self.isR and self.isL): # is inner face
             if (self.faceType == 'X'):
                 self.flux_Mass, \
@@ -145,37 +159,6 @@ class Face:
 
             self.isR = False
             self.isL = False # Reset the state so next iteration overwrites 
-        else: # is boundary face
-            # For boundary faces retry getFlux
-            # But this time fill R or L with L and R of the wormhole_face
-            if self.isR:
-                self.isL = True
-                if self.wormhole_face.isL:
-                    self.rho_L = self.wormhole_face.rho_L
-                    self.u_L = self.wormhole_face.u_L
-                    self.v_L = self.wormhole_face.v_L
-                    self.p_L = self.wormhole_face.p_L
-                else:
-                    self.rho_L = self.wormhole_face.rho_R
-                    self.u_L = self.wormhole_face.u_R
-                    self.v_L = self.wormhole_face.v_R
-                    self.p_L = self.wormhole_face.p_R
-                self.getFlux()           
-            elif self.isL:
-                self.isR = True
-                if self.wormhole_face.isR:
-                    self.rho_R = self.wormhole_face.rho_R
-                    self.u_R = self.wormhole_face.u_R
-                    self.v_R = self.wormhole_face.v_R
-                    self.p_R = self.wormhole_face.p_R
-                else:
-                    self.rho_R = self.wormhole_face.rho_L
-                    self.u_R = self.wormhole_face.u_L
-                    self.v_R = self.wormhole_face.v_L
-                    self.p_R = self.wormhole_face.p_L
-                self.getFlux()
-            else:
-                raise Exception('Face has no values yet, which is weird')
 
     def calcFlux(self, rho_L, rho_R, u_L, u_R, v_R, v_L, p_L, p_R ):
         gamma = atm.gamma

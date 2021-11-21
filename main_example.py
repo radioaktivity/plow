@@ -189,13 +189,13 @@ def main():
 	""" Finite Volume simulation """
 	
 	# Simulation parameters
-	N                      = 120 # resolution
-	boxsize                = 100.
+	N                      = 100 # resolution
+	boxsize                = 1.
 	gamma                  = 5/3 # ideal gas gamma
 	courant_fac            = 0.4
 	t                      = 0
 	tEnd                   = 2000
-	tOut                   = 0.02 # draw frequency
+	tOut                   = 0.2 # draw frequency
 	useSlopeLimiting       = False
 	plotRealTime = True # switch on for plotting as the simulation goes along
 	show_rho = False
@@ -205,7 +205,8 @@ def main():
 	dx = boxsize / N
 	vol = dx**2
 	xlin = np.linspace(0.5*dx, boxsize-0.5*dx, N)
-	Y, X = np.meshgrid( xlin, xlin )
+	ylin = np.linspace(0.5*dx, 2*boxsize-0.5*dx, N)
+	Y, X = np.meshgrid( xlin, ylin )
 	
 	# Generate Initial Conditions - opposite moving streams with perturbation
 	w0 = 0.1
@@ -217,11 +218,12 @@ def main():
 	vy =  w0*np.sin(4*np.pi*X) * ( np.exp(-(Y-0.25)**2/(2 * sigma**2)) + np.exp(-(Y-0.75)**2/(2*sigma**2)) )
 
 	P = 2.5 * np.ones(X.shape)
-
-	rho = np.true_divide(rho,rho)
-	vx = vx*0	
-	vy = vy*0
-	vx[int(N/2), int(N/2)] = 0.1
+	if False:
+		P = 2.5 * np.ones(X.shape)
+		rho = np.true_divide(rho,rho)
+		vx = vx*0	
+		vy = vy*0
+		vx[int(N/2), int(N/2)] = 10
 
 
 	# Get conserved variables

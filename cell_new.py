@@ -40,10 +40,10 @@ class Cell:
         self.p_dx, self.p_dy = 0, 0
 
         # conservatives
-        self.m = 0
-        self.mu = 0
-        self.mv = 0
-        self.e = 0
+        self.Mass = 0
+        self.Momx = 0
+        self.Momy = 0
+        self.Energy = 0
 
     ############################
     ## Functions for meshing ###
@@ -180,10 +180,10 @@ class Cell:
 
     def calc_primitives(self):
         self.rho, self.u, self.v, self.p = \
-            convert.getPrimitive(self.m, self.mu, self.mv, self.e, self.volume)
+            convert.getPrimitive(self.Mass, self.Momx, self.Momy, self.Energy, self.volume)
 
     def calc_conserved(self):
-        self.m, self.mu, self.mv, self.e = \
+        self.Mass, self.Momx, self.Momy, self.Energy = \
             convert.getConserved(self.rho, self.u, self.v, self.p, self.volume)
 
     def calc_gradients_central(self):
@@ -192,7 +192,8 @@ class Cell:
         n_R = self.neighbors[1]
 
         # top face length 
-        d = 2* self.faces[2].surface 
+        #d = -1 * self.center.distance(n_L.center) + self.center.distance(n_R.center)
+        d = 2*self.longest_side
 
         self.rho_dx = (n_R.rho-n_L.rho)/d 
         self.u_dx =  (n_R.u-n_L.u)/d
@@ -203,7 +204,8 @@ class Cell:
         n_U = self.neighbors[2]
 
         # left face length
-        d = self.faces[0].surface * 2
+        # d = -1*  self.center.distance(n_U.center) + self.center.distance(n_D.center)
+        d = 2*self.longest_side
 
         self.rho_dy = (n_U.rho-n_D.rho)/d
         self.u_dy =  (n_U.u-n_D.u)/d
@@ -233,7 +235,7 @@ class Cell:
         # LEFT
         f = self.faces[0]
 
-        fn = self.center.getVecBetween(f.center)
+        fn = self.vecs2faces[0]
 
         rho_face = self.rho + self.rho_dx * fn[0]
         u_face = self.u + self.u_dx * fn[0]
@@ -245,7 +247,7 @@ class Cell:
         # RIGHT
         f = self.faces[1]
 
-        fn = self.center.getVecBetween(f.center)
+        fn = self.vecs2faces[1]
 
         rho_face = self.rho + self.rho_dx * fn[0]
         u_face = self.u + self.u_dx * fn[0]
@@ -257,7 +259,7 @@ class Cell:
         # TOP
         f = self.faces[2]
 
-        fn = self.center.getVecBetween(f.center)
+        fn = self.vecs2faces[2]
 
         rho_face = self.rho + self.rho_dy * fn[1]
         u_face = self.u + self.u_dy * fn[1]
@@ -270,7 +272,7 @@ class Cell:
         # BOTTOM
         f = self.faces[3]
 
-        fn = self.center.getVecBetween(f.center)
+        fn = self.vecs2faces[3]
 
         rho_face = self.rho + self.rho_dy * fn[1]
         u_face = self.u + self.u_dy * fn[1]
@@ -281,59 +283,21 @@ class Cell:
 
 
     def get_flux_and_apply(self, dt):
-        '''
-
-        flux_Mass_X, flux_Momx_X, flux_Momy_X, flux_Energy_X
-		flux_Mass_Y, flux_Momy_Y, flux_Momx_Y, flux_Energy_Y
-
-
-        Mass   = applyFluxes(Mass, flux_Mass_X, flux_Mass_Y, dx, dt)
-		Momx   = applyFluxes(Momx, flux_Momx_X, flux_Momx_Y, dx, dt)
-		Momy   = applyFluxes(Momy, flux_Momy_X, flux_Momy_Y, dx, dt)
-		Energy = applyFluxes(Energy, flux_Energy_X, flux_Energy_Y, dx, dt)
-        '''
-        # LEFT
-        f = self.faces[0]
-        fn = self.center.getVecBetween(f.center)
-        sign = -1
-
-        self.m +=  sign* self.volume * f.flux_Mass * dt
-        self.mu +=  sign* self.volume * f.flux_Momx * dt
-        self.mv += sign*  self.volume * f.flux_Momy * dt
-        self.e +=  sign* self.volume * f.flux_Energy * dt
-
-
-        # RIGHT
-        f = self.faces[1]
-        fn = self.center.getVecBetween(f.center)
-        sign = 1
-
-        self.m +=  sign* self.volume * f.flux_Mass * dt
-        self.mu +=  sign* self.volume * f.flux_Momx * dt
-        self.mv += sign*  self.volume * f.flux_Momy * dt
-        self.e +=  sign* self.volume * f.flux_Energy * dt
-
-        
-        # TOP
-        f = self.faces[2]
-        fn = self.center.getVecBetween(f.center)
-        sign = 1
-
-        self.m +=  sign* self.volume * f.flux_Mass *dt
-        self.mu +=  sign* self.volume * f.flux_Momx * dt
-        self.mv += sign*  self.volume * f.flux_Momy * dt
-        self.e +=  sign* self.volume * f.flux_Energy * dt
-
- 
-        # BOTTOM
-        f = self.faces[3]
-        fn = self.center.getVecBetween(f.center)
-        sign = -1
-
-        self.m +=  sign* self.volume * f.flux_Mass *dt
-        self.mu +=  sign* self.volume * f.flux_Momx * dt
-        self.mv += sign*  self.volume * f.flux_Momy * dt
-        self.e +=  sign* self.volume * f.flux_Energy * dt
+        # L R U D
+        f_L = self.faces[0]
+        f_R = self.faces[1]
+        self.Mass -= dt * (f_L.flux_Mass - f_R.flux_Mass) * f_L.surface 
+        self.Momx -= dt * (f_L.flux_Momx -f_R.flux_Momx) * f_L.surface 
+        self.Momy -= dt * (f_L.flux_Momy -f_R.flux_Momy) * f_L.surface  
+        self.Energy -= dt * (f_L.flux_Energy - f_R.flux_Energy) * f_L.surface  
+     
+        f_L = self.faces[2]
+        f_R = self.faces[3]
+        self.Mass -= dt * (f_L.flux_Mass - f_R.flux_Mass) * f_L.surface  
+        self.Momx -= dt * (f_L.flux_Momx -f_R.flux_Momx) * f_L.surface  
+        self.Momx -= dt * (f_L.flux_Momy -f_R.flux_Momy) * f_L.surface  
+        self.Energy -= dt * (f_L.flux_Energy - f_R.flux_Energy) * f_L.surface  
+     
 
         # update primitive values
         self.calc_primitives()
@@ -353,7 +317,7 @@ class Cell:
         return f'#Cell {self.number}, \n'+\
                 f'primitives: rho {self.rho}, u {self.u}, v {self.v}, p {self.p} \n'+\
                 f'gradients: {self.gradients} \n'+\
-                f'conserved: m, mu, mv, e {self.m, self.mu, self.mv, self.e}\n'+\
+                f'conserved: m, mu, mv, e {self.Mass, self.Momx, self.Momy, self.Energy}\n'+\
                 f'non orthogonality to neighbors: {non_ortho}\n'+\
                 f'\n________________________________________________________________________'
 

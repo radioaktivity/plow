@@ -118,18 +118,17 @@ def create_mesh_rect(n=8, plot_cells=False):
             #print(c.neighbors[0].number, c.neighbors[1].number, c.neighbors[2].number, c.neighbors[3].number)
             f.plot_border()
 
-    plt.show()
-
     return [cells, points_obj, faces_set]
 
 if __name__ == "__main__":
-    cells, points_obj, faces_set = create_mesh_rect(n=5,plot_cells=True)
+    cells, points_obj, faces_set = create_mesh_rect(n=9,plot_cells=True)
     
     for c in cells: 
         print('_'*50)
         print('Cell number: ', c.number)
+        print('center', c.center)
         print('Neighbors ', [n.number for n in c.neighbors])
-        print('Faces ',[f.number for f in c.faces])
+        print('Faces ',[[f.number, f.center.__str__()] for f in c.faces])
 
 
     for f in faces_set:

@@ -17,14 +17,21 @@ from global_proporties import *
 from mesh_check import *
 from vector_alg import *
 
-def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
-    if mix>1:
-        mix = 1
-    if mix<0:
-        mix = 0
-    c1=np.array(colors.to_rgb(c1))
-    c2=np.array(colors.to_rgb(c2))
-    return colors.to_hex((1-mix)*c1 + mix*c2)
+def plot_image(cells, n, pause=0.1):
+    dim = n-1
+    A = np.zeros((dim,dim))
+    k = 0
+    for row in reversed(range(dim)):
+        for col in range(dim):
+            u_total = np.sqrt(cells[k].u**2+cells[k].v**2)
+            u_total_norm = u_total/0.2
+            A[row,col] = cells[k].p
+            k +=1
+    # A = np.true_divide(A,0.2)
+
+    plt.cla()
+    plt.imshow(A)
+    plt.pause(pause)
 
 def print_cell(cell, number=10):
     if (cell.number == number):
@@ -39,12 +46,7 @@ def print_cell(cell, number=10):
             print(n.v)
             print('-'*30)
 
-def tc(cells):
-    for c in cells:
-        text_values_in_cell(c,primitives=True, gradients=True)
-def tf(faces):
-    for f in faces:
-        text_values_on_face(f, primitives=True)
+
 
 def get_scatter_values(cells):
     x_plot = []
@@ -100,13 +102,12 @@ def main():
     # numerical parameters
     t = 0
     t_end = 100
-    dt = 0.01
-    courant_fac = 0.4
-    n = 20
-    nth_turn = 10
-    pause = 0.01
-    scatter = True
-    image_paint = False
+    courant_fac = 0.2
+    n = 16
+    nth_turn = 5
+    pause = 0.1
+    scatter = False
+    image_paint = True
 
     # Creating the mesh
     start = timeit.default_timer()
@@ -118,7 +119,7 @@ def main():
 
 
     # cells = exponential_boundary(cells, n)
-    cells = impulse_initial(cells, n, size=(1.5,0))
+    cells = impulse_initial(cells, n, size=(0,0.1))
 
     for i, c in enumerate(cells):
         c.calc_conserved()
@@ -130,6 +131,7 @@ def main():
     dt = min(possible_dts) * courant_fac
     print(f"*** Starting timestep dt: {dt}")
 
+    plot_image(cells, n, pause=1)
     if scatter:
         fig = plt.figure()
         ax = Axes3D(fig)
@@ -138,26 +140,6 @@ def main():
 
     i = 0
     while t<t_end:
-        
-        if image_paint and (i%nth_turn==0):
-            print('*****Time', t)
-            dim = n-1
-            A = np.zeros((dim,dim))
-            k = 0
-            for row in reversed(range(dim)):
-                for col in range(dim):
-                    u_total = np.sqrt(cells[k].u**2+cells[k].v**2)
-                    u_total_norm = u_total/0.2
-                    A[row,col] = cells[k].p
-                    k +=1
-            # A = np.true_divide(A,0.2)
-        
-            plt.cla()
-            plt.imshow(A)
-            plt.pause(pause)
-        elif scatter and (i%nth_turn==0):
-            scatter_quantity(ax, cells)
-            
 
         for c in cells:
             c.calc_gradients_central()
@@ -170,6 +152,7 @@ def main():
 
         for f in faces:
             f.getFlux()
+            
 
         # apply fluxes 
         for c in cells:
@@ -185,6 +168,14 @@ def main():
         # Calculate new dt by the courant number in every cell and taking the smallest result
             possible_dts.append(( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
         dt = min(possible_dts) * courant_fac
+
+                        
+        if image_paint and (i%nth_turn==0):
+            print(t)
+            plot_image(cells, n, pause=pause)
+        elif scatter and (i%nth_turn==0):
+            scatter_quantity(ax, cells)
+
 
         # update time
         t += dt

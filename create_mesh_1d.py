@@ -6,7 +6,7 @@ from face1d import *
 from convert1d import *
 
 def create_mesh(n=30):
-    dim = 1
+    dim = 100
     points = np.linspace(0,dim,n)
 
     points_obj = []

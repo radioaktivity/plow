@@ -3,6 +3,7 @@ import numpy as np
 from face import *
 from point import *
 from convert1d import *
+import scipy.interpolate
 
 class Cell:
     def __init__(self, number):
@@ -65,7 +66,7 @@ class Cell:
             self.rho_dx = (n_R.rho-n_L.rho)/d 
             self.u_dx =  (n_R.u-n_L.u)/d
             self.p_dx =  (n_R.p-n_L.p)/d
-        else:
+        elif type == 'forward':
             d = self.distance
             n_L = self.neighbors[0]
             n_R = self.neighbors[1]
@@ -78,12 +79,38 @@ class Cell:
                 self.rho_dx = (self.rho-n_R.rho)/d 
                 self.u_dx =  (self.u-n_R.u)/d
                 self.p_dx =  (self.p-n_R.p)/d
+        elif type == 'spline':
+            n_L = self.neighbors[0]
+            n_L_L = n_L.neighbors[0]
+            n_R = self.neighbors[1]
+            n_R_R = n_R.neighbors[1]
+
+            #x = [n_L.center.X, n_L_L.center.X, self.center.X, n_R.center.X, n_R_R.center.X]
+            x = [-self.volume*2, -self.volume,0,self.volume,2*self.volume]
+
+            self.rho_dx = self.getGradientSpline(
+                [n_L_L.rho, n_L.rho, self.rho, n_R.rho, n_R_R.rho],x)
+            self.u_dx = self.getGradientSpline(
+                [n_L_L.u, n_L.u, self.u, n_R.u, n_R_R.u],x)
+            self.p_dx = self.getGradientSpline(
+                [n_L_L.p, n_L.p, self.p, n_R.p, n_R_R.p],x)
+
+    def getGradientSpline(self, f, x):         
+
+        spl = scipy.interpolate.splrep(x,f,k=3) # no smoothing, 3rd order spline
+        ddy = scipy.interpolate.splev(x,spl,der=1) # use those knots to get second derivative
+
+        return ddy[2]
+
 
     def extrapol_in_time(self, dt):
         # extrapolate half-step in time
-        self.rho = self.rho - 0.5*dt * ( self.u * self.rho_dx + self.rho * self.u_dx)
-        self.u  = self.u  - 0.5*dt * ( self.u * self.u_dx + (1/self.rho) * self.p_dx )
-        self.p   = self.p   - 0.5*dt * ( atm.gamma* self.p * (self.u_dx)  + self.u * self.p_dx)
+        self.rho = self.rho - 0.5*dt * ( self.u * self.rho_dx \
+            + self.rho * self.u_dx)
+        self.u  = self.u  - 0.5*dt * ( self.u * self.u_dx \
+            + (1/self.rho) * self.p_dx )
+        self.p   = self.p   - 0.5*dt * ( atm.gamma* self.p \
+            * (self.u_dx)  + self.u * self.p_dx)
 
     def extrapol2faces(self):
         # Left Face
