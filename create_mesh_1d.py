@@ -25,14 +25,20 @@ def create_mesh(n=30):
         new_cell.boundary_points.append(points_obj[i])
         new_cell.boundary_points.append(points_obj[i+1])
         cells.append(new_cell)
-        
+    
+    for i,c in enumerate(cells):
+        c.faces.append(faces[i])
+        c.faces.append(faces[i+1])
 
     for i, c in zip(range(len(cells)-1), cells):
-        c.calc_all()
         c.neighbors.append(cells[i-1])
         c.neighbors.append(cells[i+1])
     cells[-1].neighbors.append(cells[-2])
     cells[-1].neighbors.append(cells[0])
+
+    for c in cells:
+        c.calc_all()
+
 
     return cells, faces
 

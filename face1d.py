@@ -1,5 +1,5 @@
 import numpy as np
-
+from global_proporties import *
 from point import *
 
 class Face1D:
@@ -8,19 +8,41 @@ class Face1D:
         self.number = number
         self.center = center
         self.wormhole_face = None
+        self.surface = None
 
-    def getFlux(rho_L, rho_R, u_L, u_R, p_L, p_R, gamma):
+        self.rho_L, self.u_L, self.p_L = None, None, None
+        self.rho_R, self.u_R, self.p_R = None, None, None
+
+    def getPrimitives(self, rho, u, p, side=None):
+        # side: pov face so, when cell on the right side='R'
+
+        if side == 'L':
+            self.rho_L, self.u_L, self.p_L = rho, u, p
+        else:
+            self.rho_R, self.u_R, self.p_R = rho, u, p
+
+    def calcFlux(self):
+        w = self.wormhole_face
+        if self.rho_L == None:
+            self.rho_L, self.u_L, self.p_L = w.rho_L, w.u_L, w.p_L
+        if self.rho_R == None:
+            self.rho_R, self.u_R, self.p_R = w.rho_R, w.u_R, w.p_R
+        
+        self.flux_Mass, self.flux_Momx, self.flux_Energy = \
+             self.getFlux(self.rho_L, self.rho_R, self.u_L, self.u_R, self.p_L, self.p_R)
+
+    def getFlux(self, rho_L, rho_R, u_L, u_R, p_L, p_R):
+        
         # left and right energies
-        en_L = p_L/(gamma-1)+0.5*rho_L * (u_L**2)
-        en_R = p_R/(gamma-1)+0.5*rho_R * (u_R**2)
+        en_L = p_L/(atm.gamma-1)+0.5*rho_L * (u_L**2)
+        en_R = p_R/(atm.gamma-1)+0.5*rho_R * (u_R**2)
 
         # compute star (averaged) states
         rho_star  = 0.5*(rho_L + rho_R)
         momx_star = 0.5*(rho_L * u_L + rho_R * u_R)
-        momy_star = 0.5*(rho_L * vy_L + rho_R * vy_R)
         en_star   = 0.5*(en_L + en_R)
 
-        p_star = (gamma-1)*(en_star-0.5*(momx_star**2+momy_star**2)/rho_star)
+        p_star = (atm.gamma-1)*(en_star-0.5*(momx_star**2)/rho_star)
 
         # compute fluxes (local Lax-Friedrichs/Rusanov)
         flux_Mass   = momx_star
@@ -28,8 +50,8 @@ class Face1D:
         flux_Energy = (en_star+p_star) * momx_star/rho_star
 
         # find wavespeeds
-        C_L = np.sqrt(gamma*p_L/rho_L) + np.abs(u_L)
-        C_R = np.sqrt(gamma*p_R/rho_R) + np.abs(u_R)
+        C_L = np.sqrt(atm.gamma*p_L/rho_L) + np.abs(u_L)
+        C_R = np.sqrt(atm.gamma*p_R/rho_R) + np.abs(u_R)
         C = np.maximum( C_L, C_R )
 
         # add stabilizing diffusive term
