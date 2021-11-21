@@ -22,8 +22,6 @@ class Face:
         self.theta = 0 # angle to x axis
         self.faceType = type
         self.wormhole_face = None
-        
-
 
         self.calc_surfacenormal2() 
 

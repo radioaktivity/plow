@@ -40,14 +40,14 @@ def plot_pressure(cells, title=' ', pause=1, faces=None):
 
     plt.legend()
     plt.title(title)
-    plt.ylim((-1,3))
+    plt.ylim((-1,4))
     plt.pause(pause)
 
-def impulse_initial(cells, n):
+def impulse_initial(cells, n, size=0.3):
     for i, c in enumerate(cells):
         if i==int(n/2):
             c.rho = 1
-            c.u = 0.3
+            c.u = size
             c.p = 2.5
         else:
             c.rho = 1
@@ -86,10 +86,10 @@ def exponential_boundary(cells, n):
 if __name__ == '__main__':
 
     t = 0
-    t_end = 100
+    t_end = 10
     dt = 0
     pause = 0.01
-    nth_plot = 50
+    nth_plot = 100
     courant_fac = 0.4
     n = 50
 
@@ -100,7 +100,8 @@ if __name__ == '__main__':
     #cells = exponential_boundary(cells)
     
     # cells = exponential_boundary(cells, n)
-    cells = step_intial(cells, n, size=2.7)
+    cells = step_intial(cells, n, size=-1.5)
+    cells = impulse_initial(cells, n, size=3)
     plot_pressure(cells)
 
 
@@ -116,9 +117,8 @@ if __name__ == '__main__':
     count = 0
     while t<t_end:
         if count%nth_plot==0:
-            #print(t)
+            print(t)
             plot_pressure(cells, title='flux applied', pause=pause, faces=None)
-
 
         for c in cells:
             c.calc_gradients(type='central')

@@ -6,7 +6,7 @@ from numpy import linalg
 
 from point import *
 from face_new import *
-from convert import *
+import convert
 from global_proporties import *
 from vector_alg import *
 
@@ -33,7 +33,11 @@ class Cell:
         self.u = 0
         self.v = 0
         self.p = 0
-        self.gradients = None
+        
+        self.rho_dx, self.rho_dy = 0, 0
+        self.u_dx, self.u_dy = 0, 0
+        self.v_x, self.v_dy = 0, 0
+        self.p_dx, self.p_dy = 0, 0
 
         # conservatives
         self.m = 0
@@ -41,27 +45,9 @@ class Cell:
         self.mv = 0
         self.e = 0
 
-
-
-    def calc_primitives(self):
-        self.rho, self.u, self.v, self.p = \
-            getPrimitive(self.m, self.mu, self.mv, self.e, self.volume)
-        if atm.npround:
-            self.rho = np.round(self.rho, decimals=6)
-            self.u = np.round(self.u, decimals=6)
-            self.v = np.round(self.v, decimals=6)
-            self.p = np.round(self.p , decimals=6)
-        
-    def calc_all(self):
-        if self.boundary_points == []:
-            raise Exception('Fatal: No Boundary Points added')
-        if self.neighbors == []:
-            raise Exception('Fatal: No Neighbors added')
-        if self.faces == []:
-            raise Exception('Fatal: No faces added')
-
-        self.calc_volume()
-        self.calc_vecs2faces()
+    ############################
+    ## Functions for meshing ###
+    ############################
 
     def set_boundary_points(self, list_of_points:Point):
         self.boundary_points = list_of_points
@@ -183,120 +169,64 @@ class Cell:
         
         for f in self.faces:
             self.vecs2faces.append(self.center.getVecBetween(f.center))
-    
 
-    def calc_gradients_upwind(self):
-       
-        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]=\
-            [0.,0.,0.,0.,0.,0.,0.,0.]
+    ##############################
+    #### Functions for Solver ####
+    ##############################
 
-        # X Direction Gradient 
-        if self.u > 0: # Left neighbor is needed
-           n = self.neighbors[0] 
-           direction  = -1
-        else: # Right neighbor is needed
-           n = self.neighbors[1]
-           direction  = 1
+    def calc_all(self):
+        self.calc_volume()
+        self.calc_vecs2faces()
 
-        d12 = self.center.getVecBetween(n.center)
-        d = d12[0] # vector to neihbor
+    def calc_primitives(self):
+        self.rho, self.u, self.v, self.p = \
+            convert.getPrimitive(self.m, self.mu, self.mv, self.e, self.volume)
 
-        # top face length 
-        d = self.faces[2].surface *direction
-
-        rho_dx += (n.rho-self.rho)/d
-        u_dx +=  (n.u-self.u)/d
-        v_dx +=  (n.v-self.v)/d
-        p_dx +=  (n.p-self.p)/d
-            
-
-        # Y Direction Gradient 
-        if self.v > 0: # bottom neighbor is needed
-            n = self.neighbors[3]
-            direction = -1
-        else: # top neighbor is needed
-            n = self.neighbors[2]
-            direction = 1
-
-        d12 = self.center.getVecBetween(n.center)
-        d = d12[1] # vector to neighbor
-        # left face length
-        d = self.faces[0].surface *direction
-
-        rho_dy += (n.rho-self.rho)/d
-        u_dy +=  (n.u-self.u)/d
-        v_dy +=  (n.v-self.v)/d
-        p_dy += (n.p-self.p)/d
-            
-        self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
+    def calc_conserved(self):
+        self.m, self.mu, self.mv, self.e = \
+            convert.getConserved(self.rho, self.u, self.v, self.p, self.volume)
 
     def calc_gradients_central(self):
-       
-        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]=\
-            [0.,0.,0.,0.,0.,0.,0.,0.]
-
 
         n_L = self.neighbors[0] 
-
         n_R = self.neighbors[1]
 
         # top face length 
         d = 2* self.faces[2].surface 
 
-        rho_dx = (n_R.rho-n_L.rho)/d 
-        u_dx =  (n_R.u-n_L.u)/d
-        v_dx =  (n_R.v-n_L.v)/d
-        p_dx =  (n_R.p-n_L.p)/d
-
-
-        if atm.npround:
-            rho_dx = np.round(rho_dx, decimals=6)
-            u_dx =   np.round(u_dx, decimals=6)
-            v_dx =   np.round(v_dx, decimals=6)
-            p_dx =   np.round(p_dx, decimals=6)
-
+        self.rho_dx = (n_R.rho-n_L.rho)/d 
+        self.u_dx =  (n_R.u-n_L.u)/d
+        self.v_dx =  (n_R.v-n_L.v)/d
+        self.p_dx =  (n_R.p-n_L.p)/d
 
         n_D = self.neighbors[3]
         n_U = self.neighbors[2]
 
+        # left face length
         d = self.faces[0].surface * 2
 
-        rho_dy = (n_U.rho-n_D.rho)/d
-        u_dy =  (n_U.u-n_D.u)/d
-        v_dy =  (n_U.v-n_D.v)/d
-        p_dy = (n_U.p-n_D.p)/d
-
-        if atm.npround:
-            rho_dy = np.round(rho_dy, decimals=6)
-            u_dy =   np.round(u_dy, decimals=6)
-            v_dy =   np.round(v_dy, decimals=6)
-            p_dy =   np.round(p_dy, decimals=6)
-            
-        self.gradients = [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy]
-
-
+        self.rho_dy = (n_U.rho-n_D.rho)/d
+        self.u_dy =  (n_U.u-n_D.u)/d
+        self.v_dy =  (n_U.v-n_D.v)/d
+        self.p_dy = (n_U.p-n_D.p)/d
+ 
     def extrapol_in_time(self, dt):
-        gamma = atm.gamma
-        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
-        rho, u, v, p = self.rho, self.u, self.v, self.p
-        #[rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = \
-         #   [-rho_dx, -rho_dy, -u_dx, -u_dy, -v_dx, -v_dy, -p_dx, -p_dy] 
 
         # extrapolate half-step in time
-        rho_prime = rho - 0.5*dt * ( u * rho_dx + rho * u_dx + v * rho_dy + rho * v_dy)
-        u_prime = u - 0.5*dt * ( u * u_dx + v * u_dy + (1/rho) * p_dx )
-        v_prime = v - 0.5*dt * ( u * v_dx + v * v_dy + (1/rho) * p_dy )
-        p_prime = p - 0.5*dt * ( gamma*p * (u_dx + v_dy)  + u * p_dx + v * p_dy )
-        
-        if atm.npround:
-            self.rho = np.round(rho_prime, decimals=6)
-            self.u = np.round(u_prime, decimals=6)
-            self.v = np.round(v_prime, decimals=6)
-            self.p = np.round(p_prime, decimals=6)
+        self.rho = self.rho - 0.5*dt * \
+            ( self.u * self.rho_dx + self.rho * self.u_dx \
+                + self.v * self.rho_dy + self.rho * self.v_dy)
+        self.u = self.u - 0.5*dt * \
+            ( self.u * self.u_dx + self.v * self.u_dy \
+                + (1/self.rho) * self.p_dx )
+        self.v = self.v - 0.5*dt * \
+            ( self.u * self.v_dx + self.v * self.v_dy \
+                + (1/self.rho) * self.p_dy )
+        self.p = self.p - 0.5*dt * \
+            ( atm.gamma*self.p * (self.u_dx + self.v_dy)\
+                  + self.u * self.p_dx + self.v * self.p_dy )
 
     def extrapol2faces(self):
-
-        [rho_dx, rho_dy, u_dx, u_dy, v_dx, v_dy, p_dx, p_dy] = self.gradients
 
         #left right top bottom
         # x x y y 
@@ -304,24 +234,23 @@ class Cell:
         f = self.faces[0]
 
         fn = self.center.getVecBetween(f.center)
-        d = abs(fn[0])
 
-        rho_face = self.rho - rho_dx * d
-        u_face = self.u - u_dx * d
-        v_face = self.v - v_dx * d
-        p_face = self.p - p_dx * d
+        rho_face = self.rho + self.rho_dx * fn[0]
+        u_face = self.u + self.u_dx * fn[0]
+        v_face = self.v + self.v_dx * fn[0]
+        p_face = self.p + self.p_dx * fn[0]
             
         f.get_primitive_values(rho_face, u_face, v_face, p_face, cellsent='R')
 
         # RIGHT
         f = self.faces[1]
-        fn = self.center.getVecBetween(f.center)
-        d = abs(fn[0])
 
-        rho_face = self.rho + rho_dx * d
-        u_face = self.u + u_dx * d
-        v_face = self.v + v_dx * d
-        p_face = self.p + p_dx * d
+        fn = self.center.getVecBetween(f.center)
+
+        rho_face = self.rho + self.rho_dx * fn[0]
+        u_face = self.u + self.u_dx * fn[0]
+        v_face = self.v + self.v_dx * fn[0]
+        p_face = self.p + self.p_dx * fn[0]
 
         f.get_primitive_values(rho_face, u_face, v_face, p_face, cellsent='L')
 
@@ -329,11 +258,11 @@ class Cell:
         f = self.faces[2]
 
         fn = self.center.getVecBetween(f.center)
-        d = abs(fn[1])
-        rho_face = self.rho + rho_dy * d
-        u_face = self.u + u_dy * d
-        v_face = self.v + v_dy * d
-        p_face = self.p + p_dy * d
+
+        rho_face = self.rho + self.rho_dy * fn[1]
+        u_face = self.u + self.u_dy * fn[1]
+        v_face = self.v + self.v_dy * fn[1]
+        p_face = self.p + self.p_dy * fn[1]
 
         f.get_primitive_values(rho_face, u_face, v_face, p_face, cellsent='BOTTOM')
 
@@ -342,11 +271,11 @@ class Cell:
         f = self.faces[3]
 
         fn = self.center.getVecBetween(f.center)
-        d = abs(fn[1])
-        rho_face = self.rho - rho_dy * d
-        u_face = self.u - u_dy * d
-        v_face = self.v - v_dy * d
-        p_face = self.p - p_dy * d
+
+        rho_face = self.rho + self.rho_dy * fn[1]
+        u_face = self.u + self.u_dy * fn[1]
+        v_face = self.v + self.v_dy * fn[1]
+        p_face = self.p + self.p_dy * fn[1]
 
         f.get_primitive_values(rho_face, u_face, v_face, p_face, cellsent='TOP')
 
@@ -367,54 +296,47 @@ class Cell:
         f = self.faces[0]
         fn = self.center.getVecBetween(f.center)
         sign = -1
-        flux_Mass, flux_Momx, flux_Momy, flux_Energy = f.give_FLuxes(side='L')
 
+        self.m +=  sign* self.volume * f.flux_Mass * dt
+        self.mu +=  sign* self.volume * f.flux_Momx * dt
+        self.mv += sign*  self.volume * f.flux_Momy * dt
+        self.e +=  sign* self.volume * f.flux_Energy * dt
 
-        self.m +=  sign* self.volume * flux_Mass * dt
-        self.mu +=  sign* self.volume * flux_Momx * dt
-        self.mv += sign*  self.volume * flux_Momy * dt
-        self.e +=  sign* self.volume * flux_Energy * dt
 
         # RIGHT
         f = self.faces[1]
         fn = self.center.getVecBetween(f.center)
         sign = 1
-        flux_Mass, flux_Momx, flux_Momy, flux_Energy = f.give_FLuxes(side='R')
 
-        self.m +=  sign* self.volume * flux_Mass * dt
-        self.mu +=  sign* self.volume * flux_Momx * dt
-        self.mv += sign*  self.volume * flux_Momy * dt
-        self.e +=  sign* self.volume * flux_Energy * dt
+        self.m +=  sign* self.volume * f.flux_Mass * dt
+        self.mu +=  sign* self.volume * f.flux_Momx * dt
+        self.mv += sign*  self.volume * f.flux_Momy * dt
+        self.e +=  sign* self.volume * f.flux_Energy * dt
 
         
         # TOP
         f = self.faces[2]
         fn = self.center.getVecBetween(f.center)
         sign = 1
-        flux_Mass, flux_Momx, flux_Momy, flux_Energy = f.give_FLuxes(side='TOP')
 
-        self.m +=  sign* self.volume * flux_Mass *dt
-        self.mu +=  sign* self.volume * flux_Momx * dt
-        self.mv += sign*  self.volume * flux_Momy * dt
-        self.e +=  sign* self.volume * flux_Energy * dt
+        self.m +=  sign* self.volume * f.flux_Mass *dt
+        self.mu +=  sign* self.volume * f.flux_Momx * dt
+        self.mv += sign*  self.volume * f.flux_Momy * dt
+        self.e +=  sign* self.volume * f.flux_Energy * dt
 
  
         # BOTTOM
         f = self.faces[3]
         fn = self.center.getVecBetween(f.center)
         sign = -1
-        flux_Mass, flux_Momx, flux_Momy, flux_Energy = f.give_FLuxes(side='BOTTOM')
 
+        self.m +=  sign* self.volume * f.flux_Mass *dt
+        self.mu +=  sign* self.volume * f.flux_Momx * dt
+        self.mv += sign*  self.volume * f.flux_Momy * dt
+        self.e +=  sign* self.volume * f.flux_Energy * dt
 
-        self.m +=  sign* self.volume * flux_Mass *dt
-        self.mu +=  sign* self.volume * flux_Momx * dt
-        self.mv += sign*  self.volume * flux_Momy * dt
-        self.e +=  sign* self.volume * flux_Energy * dt
-
-    
         # update primitive values
         self.calc_primitives()
-        pass
 
     def __str__(self):
 

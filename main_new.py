@@ -58,6 +58,36 @@ def get_scatter_values(cells):
 
     return x_plot, y_plot, z_plot
 
+def impulse_initial(cells, n, size=(0.1, 0)):
+    for i, c in enumerate(cells):
+        if i==int(n**2/2):
+            c.rho = 1
+            c.u = size[0]
+            c.v = size[1]
+            c.p = 2.5
+        else:
+            c.rho = 1
+            c.u = 0
+            c.v = 0
+            c.p = 2.5
+
+    return cells
+
+
+def step_intial(cells, n, size=0.1):
+    for i, c in enumerate(cells):
+        if (i<=(int(n/2)+int(n/6))) and (i>=(int(n/2)-int(n/6))):
+            c.rho = 1
+            c.u = 0
+            c.v = 0
+            c.p = 2.5
+        else:
+            c.rho = 1
+            c.u = size
+            c.v = 0
+            c.p = 2.5
+    return cells
+
 def scatter_quantity(ax, cells):
     x_plot,y_plot,z_plot = get_scatter_values(cells)
     plt.cla()
@@ -72,16 +102,11 @@ def main():
     t_end = 100
     dt = 0.01
     courant_fac = 0.4
-    n = 50
-
-    # display parameters
-    c1='blue' #blue
-    c2='red' #green
-    rho_scale = 1.23
-    color = False
-    scatter = False
-    image_paint = True
-    print_values = False
+    n = 20
+    nth_turn = 10
+    pause = 0.01
+    scatter = True
+    image_paint = False
 
     # Creating the mesh
     start = timeit.default_timer()
@@ -91,19 +116,17 @@ def main():
     print(f"Mesh Runtime : {timeit.default_timer()-start}")
     # check_cells(cells)
 
+
+    # cells = exponential_boundary(cells, n)
+    cells = impulse_initial(cells, n, size=(1.5,0))
+
+    for i, c in enumerate(cells):
+        c.calc_conserved()
+
     possible_dts = []
-    i=0
     for c in cells:
-        if c.number == int(0.5*(n-1)**2):
-            c.m, c.mu, c.mv, c.e = getConserved(1.0, 0.1, 0.0, 2.5, c.volume)
-        else:
-            c.m, c.mu, c.mv, c.e = getConserved(1.0, 0.0, 0.0, 2.5, c.volume)
-
-        c.calc_primitives()
-
         possible_dts.append(np.min( c.longest_side / \
             (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
-        i+=1
     dt = min(possible_dts) * courant_fac
     print(f"*** Starting timestep dt: {dt}")
 
@@ -115,72 +138,9 @@ def main():
 
     i = 0
     while t<t_end:
-        #print('*****Time', t)
-
-        for c in cells:
-            # calculate gradients
-            c.calc_gradients_central()
-
-        for c in cells:
-            c.extrapol_in_time(dt)
-            
-        for c in cells:
-            c.extrapol2faces()
-        tc(cells)
-        tf(faces)
-
-        if scatter:
-            scatter_quantity(ax, cells)
-            
-        # compute fluxes
-
-        for f in faces:
-            f.getFlux()
-
-
-        possible_dts = []
-
-        # apply fluxes 
-        for c in cells:
-            c.get_flux_and_apply(dt)      
-
-            if c.rho <= 0:
-                raise Exception('Negative Rho')
-            if c.p <= 0:
-                raise Exception('Negative P')
-
-        if print_values:
-            for ci, c in enumerate(cells):
-                if ci%1==0:
-                    print(f'Cell number {c.number} has u {c.u}')
-                    print(f'Cell number {c.number} has v {c.v}')
-                    print(f'Cell number {c.number} has u_dx {c.gradients}')
-
-
-        for c in cells:
-        # Calculate new dt by the courant number in every cell and taking the smallest result
-            possible_dts.append(( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
-        dt = min(possible_dts) * courant_fac
-
-        # update time
-        t += dt
-
         
-        if color:
-            for c in cells:
-                u_total = np.sqrt(c.u**2+c.v**2)
-                u_total_norm = u_total/0.2
-                rho_total_norm = c.rho/rho_scale
-                color = colorFader(c1,c2,mix=u_total_norm)
-                plt.fill([c.boundary_points[0].X, c.boundary_points[1].X,
-                        c.boundary_points[3].X,c.boundary_points[2].X, ], 
-                        [c.boundary_points[0].Y, c.boundary_points[1].Y, 
-                        c.boundary_points[3].Y, c.boundary_points[2].Y], color)
-
-        
-
-
-        if image_paint:
+        if image_paint and (i%nth_turn==0):
+            print('*****Time', t)
             dim = n-1
             A = np.zeros((dim,dim))
             k = 0
@@ -194,13 +154,41 @@ def main():
         
             plt.cla()
             plt.imshow(A)
-            plt.pause(0.01)
+            plt.pause(pause)
+        elif scatter and (i%nth_turn==0):
+            scatter_quantity(ax, cells)
             
 
-        # file_name = 'mesh'+f'{i}'+'.pdf'
-        # plt.savefig(file_name)
+        for c in cells:
+            c.calc_gradients_central()
 
-        #subprocess.Popen(['xdg-open '+file_name], shell=True)
+        for c in cells:
+            c.extrapol_in_time(dt)
+            
+        for c in cells:
+            c.extrapol2faces()
+
+        for f in faces:
+            f.getFlux()
+
+        # apply fluxes 
+        for c in cells:
+            c.get_flux_and_apply(dt)      
+
+            if c.rho <= 0:
+                raise Exception('Negative Rho')
+            if c.p <= 0:
+                raise Exception('Negative P')
+
+        possible_dts = []
+        for c in cells:
+        # Calculate new dt by the courant number in every cell and taking the smallest result
+            possible_dts.append(( c.longest_side / (np.sqrt( atm.gamma*c.p/c.rho ) + np.sqrt(c.u**2+c.v**2)) ))
+        dt = min(possible_dts) * courant_fac
+
+        # update time
+        t += dt
+
         i+=1
     
     plt.show()
