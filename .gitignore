@@ -10,6 +10,7 @@ finitevolume.png
 main_example.py
 test.py
 1D_Riemann_package/euler_1D_py.py
+1D_Riemann_package/toro_exact.py
 
 
 # C extensions
