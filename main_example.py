@@ -222,8 +222,8 @@ def main():
 	rho = np.true_divide(rho,rho)
 	vx = vx*0	
 	vy = vy*0
-	vx[:, int(N/2)] = 100 * np.ones(vx[:,1].shape)
-
+	#vx[:, int(N/2)] = 100 * np.ones(vx[:,1].shape)
+	vx[int(N/2),int(N/2)] = 5
 
 	# Get conserved variables
 	Mass, Momx, Momy, Energy = getConserved( rho, vx, vy, P, gamma, vol )
