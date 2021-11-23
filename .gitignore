@@ -21,6 +21,7 @@ test.py
 simple/main.py
 simple/visualizer.py
 Result/
+latticeboltzmann/main_example.py
 
 
 # Distribution / packaging
