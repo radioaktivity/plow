@@ -15,6 +15,9 @@ class Face1D:
 
         self.isL = False
         self.isR = False
+        self.flux_Mass = None
+        self.flux_Momx = None
+        self.flux_Energy = None
 
     def getPrimitives(self, rho, u, p, side=None):
         # side: pov face so, when cell on the right side='R'
