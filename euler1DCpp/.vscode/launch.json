@@ -1,6 +1,7 @@
 {
   "version": "0.2.0",
   "configurations": [
+    
     {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
@@ -12,7 +13,7 @@
       "program": "/mnt/c/Users/phohne/Documents/Cplusplus_proj/euler1D/build/Debug/outDebug",
       "internalConsoleOptions": "openOnSessionStart",
       "MIMode": "gdb",
-      "miDebuggerPath": "/usr/bin/gdb",
+      "miDebuggerPath": "/usr/share/gdb",
       "externalConsole": false,
       "setupCommands": [
         {
